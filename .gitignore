@@ -1,0 +1,12 @@
+# This folder is documentation only. Do not copy operational inputs here.
+private/
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.kubeconfig
+*openrc*
+*passwords*
+*.log
