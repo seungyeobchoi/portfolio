@@ -32,7 +32,9 @@ Cephadm으로 NVMe 기반 Ceph를 구축하고 Kolla-Ansible로 OpenStack을 배
 
 8월 17일 시험용 클러스터의 control plane 1대와 worker 1대가 Ready인 상태를 확인하고, Cinder CSI를 통한 볼륨 생성·사용·삭제를 검증했습니다. 8월 26일에는 클러스터 생성·정리를 담당하는 Provisioner·Finalizer의 단일 replica 실행을 확인했습니다.
 
-이후 상태 조정과 작업 분배, 표준 클러스터 생성 흐름을 통합하는 작업을 진행했습니다. 포털 요청부터 클러스터 준비, 삭제와 자원 회수까지 이어지는 전체 흐름과 모든 worker의 다중 replica 동작은 후속 검증 범위입니다. 개별 worker의 변경 내역과 실행 결과는 [검증 기록](validation.md)에 구분했습니다.
+이후 상태 조정과 작업 분배, 표준 클러스터 생성 흐름을 통합하는 작업을 진행했습니다. 2026년 8월 28일 실행 기록에서는 Provisioner·Finalizer·FBS·Dispatcher 각각의 replicas·Ready·Available이 모두 2이고 legacy monolith는 0인 구성을 확인했습니다. 모든 replica-two 단계가 종료되었고 최종 검증과 불변성 검증을 통과했습니다.
+
+이는 당시 정확히 2 replica 구성에 대한 검증이며, 해당 기록에서 production 사용은 승인되지 않았습니다. 현재 배포 상태나 production 준비 완료, 포털 요청부터 클러스터 준비·삭제·자원 회수까지의 전체 E2E 성공을 의미하지 않습니다. 이 항목들은 별도 검증이 필요하며, 과거 실행 결과와 현재 확인 범위는 [검증 기록](validation.md)에 구분했습니다.
 
 ## 본인의 기여
 
