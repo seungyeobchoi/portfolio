@@ -1,6 +1,6 @@
 # 검증 결과와 진행 범위
 
-리소스 생성 여부뿐 아니라 상태·통신·스토리지 I/O와 삭제 후 자원 회수를 확인했습니다. 작업·검증 기록과 직접 확인한 동작을 아래에 정리했습니다. 기존 2026-10-07 검토 내용에 추가로 확인한 2026-08-28 worker 다중 replica 실행 결과를 반영했습니다. 문서 정리일은 2026-10-09이며, 실행 검증일은 표에 별도로 표시했습니다.
+작업·검증 기록에서 확인한 구축·구현 성과와 실행 결과를 정리했습니다. 문서 정리일은 2026-10-11이며, 실제 실행 검증일은 아래에 별도로 표시했습니다. 구현·배포 이력, 기능 검증, 미완료 통합 검증, 원인 분석과 설계·후속 제안을 구분합니다. 문서 정리일은 재배포나 새 실행 검증일을 뜻하지 않습니다.
 
 ## 확인한 구축과 실행 결과
 
@@ -9,11 +9,11 @@
 | 클라우드와 볼륨 포털 기반 | 2026-07-31까지 | OpenStack·Ceph와 Cinder Volume 신청·제공 기반 구축 | 첫 번째 볼륨 제공 단계 |
 | 볼륨 포털 기능 | 검증 일자 미기재 | 테스트 계정의 자원 신청·생성·삭제·스냅샷·복원과 관리자 계정의 동작 점검 | 기능 검증 완료, 실제 사용자 도입 사례 없음 |
 | Octavia | 2026-08-14 | 관리망 연결, 시험용 LB 생성과 ACTIVE·ONLINE 상태, 삭제 후 임시 자원 정리 | 해당 관리 경로와 시험용 자원 |
-| CAPI/CAPO pilot | 2026-08-17 | control plane 1대·worker 1대 Ready, Cinder CSI 볼륨 생성·사용·삭제 | 시험용 클러스터 |
+| CAPI/CAPO pilot | 2026-08-17 | control plane 1대·worker 1대 Ready, Cinder CSI 볼륨 생성·사용·삭제 | 시험용 클러스터 기능 검증 |
 | Provisioner와 Finalizer | 2026-08-26 | 각각 단일 replica 실행 검증 | 해당 worker와 수정 사항 |
-| 포털 worker 다중 replica | 2026-08-28 | Provisioner·Finalizer·FBS·Dispatcher 각각 replicas·Ready·Available 2, legacy monolith 0; replica-two 검증 통과 | 당시 정확히 2 replica 구성, production 사용 미승인 |
-| GPU Kubernetes | 2026-09-01 | 기본 클러스터, 단일 노드 Pod·Service·DNS 통신, static/dynamic Local PV 검증 | 챗봇 실행 기반 |
-| FDP 연구 | 석사 연구 | 실제 SSD의 데이터 배치 확인과 WAF·TPM 비교 실험 | 연구 환경의 커널 인터페이스와 배치 전략 |
+| 포털 worker 다중 replica | 2026-08-28 | Provisioner·Finalizer·FBS·Dispatcher 각각 replicas·Ready·Available 2, legacy monolith 0; replica-two 검증 통과 | 당시 정확히 2 replica 구성 |
+| GPU Kubernetes | 2026-09-01 | 기본 클러스터, 단일 노드 Pod·Service·DNS 통신, static/dynamic Local PV 검증 | 챗봇 실행 기반의 기능 검증 완료 |
+| FDP 연구 | 석사 연구 | 커널 인터페이스 구현, 실제 SSD의 데이터 배치 확인과 WAF·TPM 비교 실험 완료 | 연구 환경의 커널 인터페이스와 배치 전략 |
 
 네트워크와 자원의 기능 검증은 전체 서비스의 무중단·장기 안정성 또는 처리량 향상 검증과 구분합니다.
 
@@ -23,17 +23,28 @@
 
 후속 기록에는 FBS 단일 replica 활성화·상태 조정(reconciliation), Dispatcher 활성화·2 replica 구성 작업, 표준 클러스터 생성 E2E 관련 소스 변경이 있습니다. 2026-08-28 실행 출력에서는 Provisioner·Finalizer·FBS·Dispatcher 각각의 replicas·Ready·Available이 모두 2이고 legacy monolith는 0인 상태를 확인했습니다. 모든 replica-two 단계가 종료되었으며 최종 결과와 불변성 검증 모두 통과했습니다.
 
-이 검증은 당시 정확히 2 replica 구성에 한정되며, 해당 출력에서 production 사용은 명시적으로 미승인 상태였습니다. 이후의 production 준비 완료 요약은 뒷받침하는 실행 근거를 확인하지 못해 독립적으로 검증한 결과로 기재하지 않습니다. 과거 replica 수는 현재 배포 상태를 나타내지 않으며, 포털 요청부터 클러스터 준비·삭제·자원 회수까지의 전체 E2E 성공도 별도 확인 대상입니다.
+이 검증은 당시 정확히 2 replica 구성에 한정되며, 해당 기록에서 production 사용은 미승인 상태였습니다. 현재 배포 상태, production 준비 완료나 포털 요청부터 클러스터 준비·삭제·자원 회수까지의 전체 E2E 성공을 증명하지 않습니다.
 
-## 진행 중인 통합과 다음 검증
+## 서비스 통합 검증 이력과 원인 분석
 
-| 대상 | 진행 범위 | 다음 검증 |
+2026-09-30 통합 검증에서는 생성 단계 성공 후 Finalizer 단계 실패를 확인했고, 전체 요청은 실패로 기록됐습니다. 당시 Finalizer의 replicas·Ready·Available은 각각 2였습니다. 따라서 worker의 replica 상태와 서비스 요청의 성공 여부를 별도로 구분합니다.
+
+후속 소스 분석에서는 API 도달성 사전조건이 연결 상태를 검사하는 경로를 확인했습니다. 이는 오류가 발생한 검사 경로에 대한 분석이며, 네트워크 장애의 근본 원인을 확정하거나 현재 장애 상태를 나타내는 결과는 아닙니다.
+
+## 서비스 통합 확인 범위
+
+| 대상 | 확인한 이력·범위 | 미확인 범위 |
 |---|---|---|
-| 포털의 Kubernetes 제공 | 클러스터 생성 흐름과 상태 조정·작업 분배 기능 통합 | 포털 요청부터 클러스터 준비·삭제·자원 회수까지 전체 E2E, 현재 배포 상태와 후속 변경에 대한 worker별·다중 replica 재검증 |
-| AI 챗봇 | Gateway·모델·애플리케이션·외부 AI DB 연결 설계와 통합 | 포털 요청부터 모델 응답까지 전체 흐름, 실제 DB 연동과 배포 후 동작 |
-| 모델과 검색 구성 | 8월 26일 기록에서 vLLM·Qwen3, pgvector·HNSW, RAG·Rule Engine·MCP 후보와 구성 검토 | 최종 적용 구성, 실제 서빙과 응답 품질·처리량·지연 |
+| 포털의 Kubernetes 제공 | 기반·worker 기능 검증과 생성 흐름·상태 조정·작업 분배 통합 이력; 9월 30일 생성 성공 후 Finalizer 실패 | 전체 생성·삭제·자원 회수 E2E 성공, 현재 배포 상태와 후속 변경의 실행 결과 |
+| AI 챗봇 | 인프라 기능 검증 완료; Gateway·모델·애플리케이션·외부 AI DB의 서비스 연계 설계·통합 범위 | 포털 요청부터 모델 응답까지 전체 E2E, 실제 DB 연동과 모델·앱 배포 후 동작 |
 
-단일 GPU 물리 노드 장애에 대한 고가용성은 제공하지 않습니다. FDP의 WAF와 TPM 측정 결과, 원인에 관한 해석은 [연구 문서](fdp-research.md)에 나누어 정리했습니다.
+단일 GPU 물리 노드 장애에 대한 고가용성은 제공하지 않습니다.
+
+## 설계 후보와 후속 제안
+
+- AI 모델·검색 구성: 2026-08-26 기록의 vLLM·Qwen3, pgvector·HNSW, RAG·Rule Engine·MCP는 설계 후보입니다. 최종 채택, 실제 서빙과 응답 품질·처리량·지연은 확인되지 않았습니다.
+- 제어 서버 A의 추가 compute 역할: 설계 제안으로 구분하며 도식의 구축 범위에 포함하지 않았습니다.
+- FDP의 PLI별 큐 처리와 배치 정책 개선: 후속 연구 제안입니다. 완료한 WAF·TPM 실험과 원인에 대한 해석은 [연구 문서](fdp-research.md)에 구분했습니다.
 
 ## 검증 방법과 역할
 

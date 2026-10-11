@@ -1,6 +1,6 @@
 # OpenStack–Kubernetes 내부 구조도
 
-관리 Kubernetes와 사용자에게 제공할 workload Kubernetes는 서로 다른 클러스터입니다. 아래는 논리 구성으로 VM의 개별 물리 호스트 배치를 나타내지 않습니다.
+2026-09-07 구성 정리본을 바탕으로 한 도식입니다. 관리 Kubernetes와 사용자에게 제공할 workload Kubernetes는 서로 다른 클러스터입니다. 아래는 논리 구성으로 VM의 개별 물리 호스트 배치를 나타내지 않습니다.
 
 ```mermaid
 flowchart TB
@@ -25,7 +25,7 @@ flowchart TB
     U --> P
     P --> PDB
     P -->|"1차 볼륨 신청·제공"| API
-    P -.->|"Kubernetes 상품 통합 진행 중"| OPS
+    P -.->|"Kubernetes 서비스 통합 범위"| OPS
     OPS -->|"클러스터 자원 관리"| API
     API -->|"VM·네트워크 구성"| WORK
     OPS -->|"관리 API 연결"| VIP
@@ -35,6 +35,8 @@ flowchart TB
     API -->|"스토리지 연동"| CEPH
 ```
 
-시험용 두 노드 Ready와 Cinder CSI 볼륨 수명주기를 검증했습니다. 포털 통합의 점선은 서비스 전체가 아직 진행 중임을 나타냅니다. API와 Ceph를 연결한 선은 서비스 연동 관계이며 실제 데이터가 모든 OpenStack API를 차례로 통과한다는 뜻은 아닙니다.
+2026-08-17 시험용 두 노드 Ready와 Cinder CSI 볼륨 수명주기를 검증했습니다. 실선은 기록에서 확인한 구성·기능 검증 관계이며, 포털 통합의 점선은 서비스 통합 범위를 나타냅니다. 2026-08-28 worker 검증과 2026-09-30 생성 성공·Finalizer 실패 이력은 [검증 기록](../docs/validation.md)에 구분했습니다. 전체 E2E 성공과 현재 배포 상태는 이 도식으로 확인하지 않습니다.
+
+API와 Ceph를 연결한 선은 서비스 연동 관계이며 실제 데이터가 모든 OpenStack API를 차례로 통과한다는 뜻은 아닙니다.
 
 Octavia의 사설 API VIP 네트워크와 Amphora 관리망은 서로 다릅니다. 이 도식에는 서비스 API 경로만 표시했습니다.
