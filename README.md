@@ -32,6 +32,7 @@
 - [클라우드 구축과 사용자 자원 제공](docs/cloud-platform.md): 장비 제약, 구성 방법, 포털 기능과 후속 확장
 - [설계 판단](docs/design-decisions.md): 네트워크 변경, GPU 클러스터와 저장소 선택의 이유
 - [검증 결과](docs/validation.md): 검증 시점, 확인한 동작과 미확인 범위
+- [PKI 키와 인증서 흐름](docs/pki-key-certificate-flow.md): etcd와 PostgreSQL/PgBouncer를 위한 일반화한 설계 예시
 
 | 구조도 | 설명 |
 |---|---|
