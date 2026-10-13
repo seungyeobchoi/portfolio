@@ -4,6 +4,8 @@ PKI(Public Key Infrastructure, 공개키 기반 구조)는 인증서를 통해 �
 
 아래는 etcd 3노드와 PostgreSQL/PgBouncer를 사용하는 **일반화한 설계 예시**다. 노드 A/B/C는 가상 이름이며 실제 운영 배치나 구축 완료를 나타내지 않는다.
 
+실행 결과와 후속 범위는 [AI 데이터 기반의 설계와 동작](ai-data-foundation-flow.md)에 별도로 정리했다. 이 문서의 가상 예시와 키 수 집계 범위는 그대로 유지한다.
+
 ## 개인키 수와 역할
 
 개인키 하나에는 대응하는 공개키가 있다. 인증서는 공개키와 신원 정보, 발급자의 서명을 묶는다. CSR(Certificate Signing Request, 인증서 서명 요청서)은 공개키와 요청 신원 정보를 포함하며 요청자의 개인키로 서명한다. CSR이나 인증서를 만들었다고 개인키가 하나 더 생기는 것은 아니다.
@@ -17,7 +19,7 @@ PKI(Public Key Infrastructure, 공개키 기반 구조)는 인증서를 통해 �
 | etcd 노드 B                   |     2 | peer용과 server용 신원 분리                |
 | etcd 노드 C                   |     2 | peer용과 server용 신원 분리                |
 
-이 표의 범위는 **CA 키 3개 + etcd 노드 키 6개 = 9개**다. Patroni 클라이언트와 PostgreSQL/PgBouncer의 서비스 키는 별도로 추가된다. SSH 접속 키와 TLS 연결에서 생성되는 임시 세션키는 이 집계에 포함하지 않는다.
+이 표의 범위는 **CA 키 3개 + etcd 노드 키 6개 = 9개**다. 노드별 관리 client, Patroni 클라이언트와 PostgreSQL/PgBouncer의 서비스 키는 별도로 추가된다. SSH 접속 키와 TLS 연결에서 생성되는 임시 세션키는 이 집계에 포함하지 않는다.
 
 이 예시에서는 CA와 etcd 노드 키에 ECDSA P-256을 사용한다. 같은 알고리즘을 사용하더라도 각 개인키는 독립적으로 생성한다.
 
