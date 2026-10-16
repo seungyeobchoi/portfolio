@@ -1,5 +1,7 @@
 # etcd와 PostgreSQL을 위한 PKI 키와 인증서 흐름
 
+[README](../README.md#구조도와-상세-문서) · [AI 챗봇 소개](ai-chatbot.md) · [관련 검증](validation.md#ai-데이터-기반의-인증권한-검증)
+
 PKI(Public Key Infrastructure, 공개키 기반 구조)는 인증서를 통해 통신 상대의 신원을 검증하는 체계다. 이 문서는 Root CA, 용도별 중간 CA, 서비스 개인키가 어떻게 연결되는지 설명한다. CA(Certificate Authority)는 인증기관을 뜻한다.
 
 아래는 etcd 3노드와 PostgreSQL/PgBouncer를 사용하는 **일반화한 설계 예시**다. 노드 A/B/C는 가상 이름이며 실제 운영 배치나 구축 완료를 나타내지 않는다.

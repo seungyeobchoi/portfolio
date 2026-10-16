@@ -29,20 +29,37 @@
 
 ## 구조도와 상세 문서
 
-- [클라우드 구축과 사용자 자원 제공](docs/cloud-platform.md): 장비 제약, 구성 방법, 포털 기능과 후속 확장
-- [설계 판단](docs/design-decisions.md): 네트워크 변경, GPU 클러스터와 저장소 선택의 이유
-- [검증 결과](docs/validation.md): 검증 시점, 확인한 동작과 미확인 범위
-- [PKI 키와 인증서 흐름](docs/pki-key-certificate-flow.md): etcd와 PostgreSQL/PgBouncer를 위한 일반화한 설계 예시
-- [AI 데이터 기반의 설계와 동작](docs/ai-data-foundation-flow.md): DNS·etcd·TLS·계정 권한과 조건부 쓰기·삭제 검증을 설명하는 그림 5개
+프로젝트 소개에서 설계 판단·검증을 확인한 뒤 상세 구조도로 이어지는 순서입니다.
 
-| 구조도 | 설명 |
-|---|---|
-| [하드웨어](diagrams/01-hardware.md) | 물리 서버 역할, 스위치와 스토리지 배치 |
-| [OpenStack과 Kubernetes](diagrams/02-openstack-kubernetes.md) | 관리 클러스터와 사용자 클러스터의 관계 |
-| [OpenStack과 Kubernetes 및 GPU](diagrams/03-openstack-kubernetes-gpu.md) | 독립 GPU 클러스터와 서비스 연계 설계 |
-| [네트워크](diagrams/04-network.md) | 외부망·내부망·Octavia 관리망과 사설 API 경로 |
+### 클라우드와 사용자 자원 제공
 
-구조도는 2026-09-07 구성 정리본을 바탕으로 상태 표현을 정리했습니다. 실선은 기록에서 확인한 구성·기능 검증 관계, 점선은 설계·서비스 통합 범위를 나타냅니다. 실선이 현재 운영 상태나 전체 서비스 성공을 뜻하지는 않으며, 검증 시점과 후속 통합 이력은 각 문서에 표시했습니다.
+1. **프로젝트 소개**: [클라우드 구축과 사용자 자원 제공](docs/cloud-platform.md) — 장비 제약, 구성 방법, 포털 기능과 후속 확장
+2. **설계 판단·검증**: [인프라 설계 판단](docs/design-decisions.md) — 네트워크 변경과 구성 선택의 이유 · [검증 결과](docs/validation.md) — 검증 시점, 확인한 동작과 미확인 범위
+3. **상세 구조도**:
+   - [하드웨어](diagrams/01-hardware.md): 물리 서버 역할, 스위치와 스토리지 배치
+   - [OpenStack과 Kubernetes](diagrams/02-openstack-kubernetes.md): 관리 클러스터와 사용자 클러스터의 관계
+   - [네트워크](diagrams/04-network.md): 외부망·내부망·Octavia 관리망과 사설 API 경로
+
+### GPU 기반 AI 챗봇
+
+1. **프로젝트 소개**: [GPU 기반 AI 챗봇 인프라](docs/ai-chatbot.md)
+2. **설계 판단·검증**: [GPU 클러스터 선택](docs/design-decisions.md#독립된-gpu-클러스터) · [모델과 DB 저장 위치](docs/design-decisions.md#모델-파일과-서비스-db의-저장-위치) · [서비스 통합 확인 범위](docs/validation.md#서비스-통합-확인-범위) · [AI 데이터 기반의 인증·권한 검증](docs/validation.md#ai-데이터-기반의-인증권한-검증)
+3. **상세 구조도**:
+   - [AI 챗봇 전체 구조와 처리 흐름](docs/ai-chatbot-architecture.md): 배치·AI 구성·인증과 재연결·DB·저장과 백업·PKI·관측을 설명하는 공개용 그림 7개
+   - [OpenStack과 Kubernetes 및 GPU](diagrams/03-openstack-kubernetes-gpu.md): 독립 GPU 클러스터와 서비스 연계 설계
+   - [AI 데이터 기반의 설계와 동작](docs/ai-data-foundation-flow.md): DNS·etcd·TLS·계정 권한과 조건부 쓰기·삭제 검증을 설명하는 그림 5개
+   - [PKI 키와 인증서 흐름](docs/pki-key-certificate-flow.md): etcd와 PostgreSQL/PgBouncer를 위한 일반화한 설계 예시
+
+### FDP SSD 커널 인터페이스 연구
+
+1. **프로젝트 소개**: [FDP SSD 파일시스템 인터페이스 연구](docs/fdp-research.md)
+2. **설계 판단·검증**: [구현과 문제 해결](docs/fdp-research.md#구현과-문제-해결) → [실제 장치 실험](docs/fdp-research.md#실제-장치-실험) → [결과와 해석의 구분](docs/fdp-research.md#결과와-해석의-구분)
+3. **상세 구조와 결과 그래프**: [연구 포트폴리오 PDF](pdf/fdp-research.pdf) 3~6쪽
+
+하드웨어·OpenStack–Kubernetes·GPU 연계·네트워크 구조도 4개는 2026-09-07 구성 정리본을 바탕으로 상태 표현을 정리했습니다. 실선은 기록에서 확인한 구성·기능 검증 관계, 점선은 설계·서비스 통합 범위를 나타냅니다. 실선이 현재 운영 상태나 전체 서비스 성공을 뜻하지는 않으며, 검증 시점과 후속 통합 이력은 각 문서에 표시했습니다.
+
+
+[AI 챗봇 전체 구조와 처리 흐름](docs/ai-chatbot-architecture.md)은 2026-10-16 설계 정리본입니다. 해당 문서의 실선은 확정된 설계 관계이며, 미결정 사항은 TBD, 구현을 연기한 범위는 [후속], 확정했지만 공개하지 않는 값은 비공개로 구분했습니다.
 
 ## PDF 포트폴리오
 
@@ -53,4 +70,4 @@
 
 ## 기록과 공개 범위
 
-문서 정리일은 2026-10-13이며, 실제 실행 검증일은 [검증 결과](docs/validation.md)에 따로 표시했습니다. 이 저장소는 설계와 경험을 설명하는 포트폴리오로, 운영 소스나 배포용 설정은 포함하지 않습니다. 장비명은 역할 기반 별칭을 사용하고 실제 주소·계정·인증정보·원본 운영 로그는 제외했습니다. PDF에서도 사진·이름·연락처·소속과 작성자 메타데이터를 제외했습니다.
+문서 정리일은 2026-10-16이며, 실제 실행 검증일은 [검증 결과](docs/validation.md)에 따로 표시했습니다. 이 저장소는 설계와 경험을 설명하는 포트폴리오로, 운영 소스나 배포용 설정은 포함하지 않습니다. 장비명은 역할 기반 별칭을 사용하고 실제 주소·계정·인증정보·원본 운영 로그는 제외했습니다. PDF에서도 사진·이름·연락처·소속과 작성자 메타데이터를 제외했습니다.

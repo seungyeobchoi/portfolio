@@ -1,6 +1,8 @@
 # OpenStack–Kubernetes–GPU 연계 구조도
 
-2026-09-07 구성 정리본을 바탕으로 한 도식입니다. GPU Kubernetes는 물리 장비 위의 독립 클러스터입니다. Nova compute, CAPO Machine 또는 기존 관리 Kubernetes worker가 아닙니다.
+[README](../README.md#구조도와-상세-문서) · [AI 챗봇 소개](../docs/ai-chatbot.md)
+
+2026-09-07 구성 정리본을 바탕으로 한 도식입니다. 2026-10-16에 정리한 [AI 챗봇 전체 구조와 처리 흐름](../docs/ai-chatbot-architecture.md)에서 후속 확정 설계와 미결정 사항을 일곱 그림으로 볼 수 있습니다. GPU Kubernetes는 물리 장비 위의 독립 클러스터입니다. Nova compute, CAPO Machine 또는 기존 관리 Kubernetes worker가 아닙니다.
 
 ```mermaid
 flowchart LR
@@ -19,7 +21,7 @@ flowchart LR
         GAPI["GPU Kubernetes API<br/>기본 기능 검증<br/>2026-09-01"]
         EDGE["챗봇 접속 계층<br/>설계"]
         APP["Frontend · Backend<br/>서비스 통합 범위"]
-        MODEL["LLM · RAG<br/>설계 후보·통합 범위"]
+        MODEL["LLM · CPU RAG/Embedding<br/>배치 설계 확정·서비스 통합 범위"]
         SSD["Local SSD / Local PV<br/>저장소 기능 검증<br/>2026-09-01"]
     end
     U --> PORTAL

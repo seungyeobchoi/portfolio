@@ -1,5 +1,7 @@
 # OpenStack–Kubernetes 내부 구조도
 
+[README](../README.md#구조도와-상세-문서) · [클라우드 소개](../docs/cloud-platform.md)
+
 2026-09-07 구성 정리본을 바탕으로 한 도식입니다. 관리 Kubernetes와 사용자에게 제공할 workload Kubernetes는 서로 다른 클러스터입니다. 아래는 논리 구성으로 VM의 개별 물리 호스트 배치를 나타내지 않습니다.
 
 ```mermaid
