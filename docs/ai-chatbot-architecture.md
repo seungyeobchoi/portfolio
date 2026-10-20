@@ -4,7 +4,7 @@
 
 학사 정보를 제공하는 AI 챗봇은 기존 Portal을 사용자 진입점으로 사용하고, 독립 DGX Kubernetes에서 AI 애플리케이션을 실행하도록 설계했습니다. PostgreSQL과 장애 전환 조정용 etcd는 OpenStack에 분리하며, 관리 Kubernetes가 인증 연계와 중앙 관측을 담당합니다.
 
-2026-10-16 기준으로 확정한 설계를 일곱 그림으로 정리했습니다. **설계 관계와 구축·종단 검증 완료는 구분합니다.** 기반 구축과 실제 시험의 날짜별 범위는 [검증 결과](validation.md), DNS·etcd의 검증 흐름은 [AI 데이터 기반](ai-data-foundation-flow.md)에서 확인할 수 있습니다.
+2026-10-16 확정 설계를 바탕으로 2026-10-21 G5 데이터 기반 완료 상태를 반영했습니다. 일곱 그림 중 서비스·모델·관측·백업 부분은 설계이며, DB 기반의 실제 구축과 시험 범위는 4절에 명시합니다. **설계 관계와 구축·종단 검증 완료는 구분합니다.** 기반 구축과 실제 시험의 날짜별 범위는 [검증 결과](validation.md), DNS·etcd의 검증 흐름은 [AI 데이터 기반](ai-data-foundation-flow.md)에서 확인할 수 있습니다.
 
 ## 목차
 
@@ -30,12 +30,13 @@
 
 | 구분 | 범위 |
 |---|---|
+| G5 완료 | PostgreSQL·Patroni 두 노드, 전용 etcd 세 멤버, Octavia 역할 선별, DGX 검증 Pod의 DNS·TLS·인증·SQL, 시험 자원 정리 |
 | 확정 설계 | 독립 DGX 클러스터, Portal 동일 origin 진입, Gateway·edge-proxy 경계, 애플리케이션 8종, 초기 GPU 2장 사용, CPU RAG·Embedding, 별도 PostgreSQL·etcd·접속 계층, 용도별 PKI·관측 |
 | 미결정 | 모델·추론 엔진·정확한 GPU pair, 서비스 API와 검색·권한 검사 담당, 대화 이력·재연결 상태 저장소 세부, 공개 도메인·발급자, 아직 확정하지 않은 성능·경보 수치 |
 | 구현 연기 | 대화 1차 구현 이후의 RGW·CSV 업로드·pgBackRest/WAL/PITR 및 외부 백업 사본 |
 | 공개 생략 | 실제 주소·도메인·호스트 배치 대응·계정·경로·키 보관 위치와 확정된 운영 수치 |
 
-데이터 기반을 준비한 뒤 GPU 모델 기반과 대화 기능·Portal 연동을 먼저 구현하고, 연기한 객체 저장소·CSV·백업을 연결한 다음 최종 운영 인수로 진행합니다. 대화 1차 구현과 전체 서비스 인수는 별도 단계입니다.
+완료한 데이터 기반 위에 GPU 모델 기반과 대화 기능·Portal 연동을 먼저 구현하고, 연기한 객체 저장소·CSV·백업을 연결한 다음 최종 운영 인수로 진행합니다. 대화 1차 구현과 전체 서비스 인수는 별도 단계입니다.
 
 ## 1 전체 배치와 서비스 진입
 
@@ -60,10 +61,10 @@ flowchart TB
         EDGE["내부 NodePort → Nginx edge-proxy<br/>replica 2 · TLS 종료"]
         FRONT["Chatbot Frontend"]
         AI["Backend · Agent · MCP<br/>RAG · Embedding · LLM"]
-        POOL["PgBouncer<br/>내부 ClusterIP · 초기 replica 1"]
+        POOL["후속 구현: PgBouncer<br/>내부 ClusterIP · 초기 replica 1"]
     end
     subgraph CLOUD["OpenStack과 공통 저장소"]
-        DATA["AI 데이터 영역<br/>PostgreSQL · Patroni · etcd · Octavia"]
+        DATA["G5 완료: AI 데이터 기반<br/>PostgreSQL · Patroni · etcd · Octavia"]
         DNS["공통 권한 DNS 2대<br/>BIND Primary / Secondary"]
         STORAGE["Cinder · Ceph RBD"]
         CEPH["Ceph 공통 저장 기반"]
@@ -172,12 +173,13 @@ sequenceDiagram
 
 ## 4 DB 접속과 자동 장애 전환
 
-일반 애플리케이션의 SQL 연결은 PgBouncer를 경유합니다. PgBouncer 장애 시 PostgreSQL 직접 접속으로 우회하지 않습니다. TLS(Transport Layer Security)는 전송 암호화와 서버 인증, mTLS는 양쪽의 인증서를 확인하는 상호 인증에 사용합니다.
+G5에서는 검증 클라이언트가 안정적인 DB 이름과 Octavia를 거쳐 PostgreSQL에 접속했습니다. 일반 애플리케이션은 후속 PgBouncer 구축 후 이를 경유하도록 설계했으며, PgBouncer 장애 시 직접 접속으로 우회하지 않습니다. TLS(Transport Layer Security)는 전송 암호화와 서버 인증, mTLS는 양쪽의 인증서를 확인하는 상호 인증에 사용합니다.
 
 ```mermaid
 flowchart TB
-    APP["승인된 DGX 애플리케이션"]
-    PGB["DGX PgBouncer<br/>서버 인증 TLS · 역할별 DB 계정"]
+    APP["후속: DGX 애플리케이션"]
+    PROBE["G5 검증 클라이언트<br/>DGX Pod · 제어 클라이언트<br/>시험 후 임시 자원 정리"]
+    PGB["후속: DGX PgBouncer<br/>서버 인증 TLS · 역할별 DB 계정"]
     ROUTE["사설 라우팅과 AI HA 라우터<br/>실제 경유 경로·주소 비공개"]
     VIP["안정적인 내부 DB 접속 이름과 VIP<br/>실제 이름·주소 비공개"]
     LB["Octavia ACTIVE_STANDBY<br/>Amphora 2대 · TCP passthrough"]
@@ -192,9 +194,10 @@ flowchart TB
     end
     DNS["공통 권한 DNS 2대<br/>DB와 노드 이름 해석"]
     WATCH["Patroni watchdog required<br/>만료 시 Nova virtual watchdog reset"]
-    DETAIL["TBD<br/>Octavia 역할 검사·TLS 연동 세부<br/>pooling·연결 예산·재접속"]
-    APP -->|"TLS"| PGB
-    PGB -->|"DB까지 mTLS와 DB role 인증"| ROUTE
+    DETAIL["후속 결정<br/>pooling·연결 예산·재접속"]
+    APP -.->|"TLS · 후속 구현"| PGB
+    PGB -.->|"후속 연결"| ROUTE
+    PROBE -->|"서버 CA·이름 검증 + client 인증서 + SCRAM"| ROUTE
     ROUTE --> VIP --> LB
     LB -->|"현재 Primary인 경우만 데이터 연결"| A
     LB -->|"현재 Primary인 경우만 데이터 연결"| B
@@ -209,13 +212,17 @@ flowchart TB
     DNS -->|"이름 해석"| VIP
     WATCH --> A
     WATCH --> B
-    DETAIL -.-> LB
     DETAIL -.-> PGB
     classDef tbd fill:#fff7ed,stroke:#d97706,color:#7c2d12,stroke-dasharray:5 5;
     class DETAIL tbd;
 ```
 
-DB VM의 이름과 Primary/Standby 역할은 고정하지 않습니다. TCP 응답만 확인하지 않고 Patroni의 Primary 판별 결과가 정상인 member로 연결하는 설계입니다. 비동기 복제의 데이터 손실 가능성과 공통 Ceph 장애 범위는 남습니다. etcd는 Kubernetes의 기존 etcd와 분리하며, 멤버별 독립 데이터 볼륨을 사용합니다. 서버 별칭은 [하드웨어 그림](../diagrams/01-hardware.md#2026-10-16-기준-compute-역할-보완)의 제어 서버 A·복합 서버 B·복합 서버 C와 같습니다. 기존 하드웨어 그림은 2026-09-07 기준이며, 후속으로 제어 서버 A에 제한된 compute 역할을 추가해 세 호스트에 etcd 멤버를 분산 배치했고 2026-10-11 실제 VM 배치를 확인했습니다. [검증 문서의 후속 기록](validation.md#2026-10-16-기준-설계-상태-보완)과 별도로 PostgreSQL HA 서비스 경로는 설계·통합 범위로 구분합니다.
+DB VM의 이름과 Primary/Standby 역할은 고정하지 않습니다. TCP 응답만 확인하지 않고 Patroni의 Primary 판별 결과가 정상인 member로 연결하는 설계입니다. 비동기 복제의 데이터 손실 가능성과 공통 Ceph 장애 범위는 남습니다. etcd는 Kubernetes의 기존 etcd와 분리하며, 멤버별 독립 데이터 볼륨을 사용합니다. 서버 별칭은 [하드웨어 그림](../diagrams/01-hardware.md#2026-10-16-기준-compute-역할-보완)의 제어 서버 A·복합 서버 B·복합 서버 C와 같습니다. 기존 하드웨어 그림은 2026-09-07 기준이며, 후속으로 제어 서버 A에 제한된 compute 역할을 추가해 세 호스트에 etcd 멤버를 분산 배치했고 2026-10-11 실제 VM 배치를 확인했습니다. [검증 문서의 후속 기록](validation.md#g5-closeout-20261021)에서 PostgreSQL HA와 실제 DGX 검증 경로의 완료를 확인할 수 있습니다. 애플리케이션과 PgBouncer의 연결은 후속 구현입니다.
+
+
+10월 21일 최종 관측에서 DB VM B는 Primary, A는 Replica였고 TLS 비동기 복제가 정상입니다. Octavia는 HTTPS `HEAD /primary`의 200 응답으로 쓰기 대상만 선택합니다. Replica의 member `ERROR`와 LB/pool `DEGRADED`는 이 역할 검사에서 나온 집계이며, SQL로 확인한 Replica streaming과 함께 해석합니다. listener와 Primary member는 `ONLINE`이었습니다.
+
+TCP passthrough에서는 PostgreSQL 클라이언트와 DB가 TLS 신원을 검증합니다. 별도 health monitor에는 승인된 CA·서버명 검증 예외가 있어 클라이언트의 strict TLS와 동일한 보장으로 취급하지 않습니다. DGX에서 관측한 실제 출발 주소와 제어 클라이언트의 단일 주소를 LB·보안그룹에서 제한했으며 연결 시간은 기존값을 유지했습니다. [G5 사례](g5-postgresql-ha.md)에 네트워크 주소 변환·장애 시험·정리와 미검증 범위를 설명합니다.
 
 ## 5 저장과 백업 및 후속 CSV 처리
 
