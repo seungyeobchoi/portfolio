@@ -1,56 +1,46 @@
-# 클라우드 인프라와 스토리지 연구
+# 클라우드 플랫폼 엔지니어 포트폴리오
+
+**OpenStack·Ceph·Kubernetes를 연결하고, 제약 조건 안에서 변경 범위를 정해 장애와 복구를 검증합니다.**
 
 보유 서버의 사양과 통신 경로를 분석해 OpenStack·Ceph 기반 사설 클라우드를 구축했습니다. Kubernetes 기반 포털에서 사용자별 자원 신청과 볼륨 관리를 구현하고, 테스트 계정과 관리자 계정으로 동작을 검증했습니다. 석사 연구에서는 FDP SSD의 데이터 배치 정보를 전달하는 Linux 커널 인터페이스를 구현했습니다.
 
-물리 장비부터 가상화·스토리지·네트워크를 연결하고, 문제가 발생하면 설정과 코드, 실제 I/O 결과를 대조하는 방식으로 구축과 검증을 수행합니다.
+장비 역할과 네트워크·스토리지 배치, 서비스 연계와 변경 허용 범위는 직접 판단했습니다. API/Worker 구현·점검 도구·로그 분석에는 Codex의 지원을 받았습니다. AI 챗봇의 LLM 관련 설계는 동료 1명이 담당합니다.
 
-## 주요 경험
+<a id="주요-경험"></a>
+## 대표 문제 해결
 
-| 경험 | 본인의 판단과 실행 | 확인한 결과 |
+| 사례 | 본인이 판단한 내용 | 확인한 결과와 범위 |
 |---|---|---|
-| 사설 클라우드 구축 | 서버별 역할 배분, 1GbE 외부망과 10GbE 내부망 분리, OpenStack·Ceph 연동 | 포털의 자원 신청·볼륨 생성·삭제·스냅샷·복원을 테스트·관리자 계정으로 검증 |
-| Octavia 관리망 확장 | 외부 스위치 제어 권한 제약을 분석하고, 기존 관리망·VXLAN을 유지하는 내부 VLAN 경로 구성 | 시험용 로드밸런서 생성, ACTIVE·ONLINE 상태와 삭제 후 임시 자원 정리 확인 |
-| PostgreSQL HA와 DGX 데이터 경로 | 리더 조정·watchdog·역할 기반 LB를 분리하고 장애별 기대 결과를 정의 | 계획 전환, 종료 유지 시 자동 승격·재합류, DGX Pod의 인증·SQL, 임시 자원 정리까지 검증 |
+| [Octavia 관리망 연결](docs/cloud-platform.md#octavia-관리망-연결-문제-해결) | 외부 스위치 권한 제약을 분석하고 기존 관리망·VXLAN을 유지하는 내부 VLAN 경로 선택 | 시험용 LB 생성·ACTIVE/ONLINE·삭제 후 정리 확인. 처리량 개선을 측정한 결과는 아님 |
+| [Kubernetes 생성·정리](docs/cloud-platform.md#kubernetes-제공-서비스로-확장) | 생성 단계와 서비스 완료를 분리하고 상태·API·실제 자원으로 결과 대조 | 2026-10-11 단일 Standard 생성·상태 유지·정상 삭제, 보존 대조 31항목 통과. 최신 접속·관측 변경본 E2E와 별도 |
+| [PostgreSQL HA와 watchdog](docs/g5-postgresql-ha.md) | 리더 조정·연결 대상 선택·watchdog의 책임과 장애별 성공 조건 분리 | 계획 전환·종료 유지 시 자동 승격·재합류·DGX Pod TLS/SQL·정리 확인. 모델 응답·앱 전체 E2E는 후속 |
 | FDP 커널 인터페이스 | 응용 프로그램부터 NVMe 드라이버까지 I/O 경로 확장, 플래그 충돌 분석·수정 | 실제 장치의 데이터 배치와 WAF·TPM 비교 실험 |
 
-볼륨 포털은 테스트·관리자 계정으로 기능 검증을 완료했으며 실제 사용자 도입 사례는 없습니다. 네트워크 구성과 시험용 자원의 검증 범위는 [설계 판단](docs/design-decisions.md)과 [검증 결과](docs/validation.md)에 정리했습니다.
-
-## 프로젝트와 담당 범위
+<a id="프로젝트와-담당-범위"></a>
+## 프로젝트와 검증 범위
 
 | 프로젝트 | 시작·구축 시점 | 확인한 성과와 범위 |
 |---|---|---|
-| [사설 클라우드와 볼륨 포털](docs/cloud-platform.md) | 2026.05 ~ 2026.07.31 1차 구축 | **구축·기능 검증 완료** — OpenStack·Ceph 통합, 테스트·관리자 계정의 볼륨 신청·관리 검증 |
-| [Kubernetes 제공 서비스](docs/cloud-platform.md#kubernetes-제공-서비스로-확장) | 2026.08 시작 | **10월 11일 단일 Standard 생성·삭제 E2E 확인** — 당시 버전에서 복구 개입 없이 생성·상태 유지·정상 삭제·자원 보존을 확인; 후속 접속·관측 변경본의 사용자 E2E는 별도 |
-| [GPU 기반 AI 챗봇](docs/ai-chatbot.md) | 2026.08 시작 | **G5 데이터 기반 완료(10월 21일)** — PostgreSQL HA·장애 시나리오·DGX Pod의 TLS/SQL·접근 제한·임시 자원 정리 검증; 모델 응답·앱 통합은 후속 |
+| [사설 클라우드와 볼륨 포털](docs/cloud-platform.md) | 2026.05 ~ 2026.07.31 1차 구축 | OpenStack·Ceph 통합, 테스트·관리자 계정의 볼륨 신청·관리 기능 검증. 실제 사용자 도입 사례 없음 |
+| [Kubernetes 제공 서비스](docs/cloud-platform.md#kubernetes-제공-서비스로-확장) | 2026.08 시작 | 당시 버전의 단일 Standard 생성·삭제 검증. 후속 사용자 종단·모든 프로필·동시 요청까지 확인한 것은 아님 |
+| [GPU 기반 AI 챗봇](docs/ai-chatbot.md) | 2026.08 시작 | 2026-10-21 데이터 기반 시험·정리 완료. GPU 모델과 AI 애플리케이션 통합은 후속 |
 | [FDP SSD 커널 인터페이스](docs/fdp-research.md) | 석사 연구 | **커널 구현·실장치 실험 완료** — Linux·ext4 인터페이스와 실제 SSD의 데이터 배치·WAF·TPM 실험 |
 
-상태는 기록에서 확인한 구성요소별 성과와 범위를 나타냅니다. 구현·배포 이력, 기능 검증, 미완료 통합 검증, 원인 분석과 후속 제안을 구분하며, 현재 배포 상태를 뜻하지 않습니다. 항목별 시점과 근거의 한계는 [검증 결과](docs/validation.md)에 정리했습니다.
+## 코드와 검증 바로 보기
 
-클라우드·포털에서는 장비 분석, 인프라 설계·통합, 네트워크 문제 해결과 기능 검증을 담당했습니다. 설계 판단과 변경 허용 범위는 직접 검토·결정하고, 포털 API/Worker 구현·점검 도구·로그 분석에는 Codex의 지원을 받았습니다. [개발·검증 방식](docs/cloud-platform.md#codex-development-validation)에 역할과 결과 구분을 정리했습니다. AI 챗봇에서는 전체 서비스 구조와 인프라 연계를 담당하며, 동료 1명이 LLM 관련 설계를 담당합니다.
+- **[접속 파일 등록기 공개 코드](https://github.com/seungyeobchoi/portal-kubectl-access)**: [PowerShell](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/windows/Register-PortalKubeconfig.ps1) · [Python](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/ubuntu/register_portal_kubeconfig.py) · [검증 범위와 제공 준비 상태](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/release-status.json)
+- **[날짜별 검증 결과](docs/validation.md)**: [Standard 생성·삭제](docs/validation.md#standard-e2e-20261011) · [DB 장애 시험·정리](docs/validation.md#g5-closeout-20261021)
+- **[개발·검증 방식](docs/cloud-platform.md#codex-development-validation)**: 본인 판단, Codex 지원, 구현·격리 시험·실제 적용·종단 시험의 구분
 
-## 구조도와 상세 문서
+공개 코드는 서명 검증·접속 파일 등록 도구입니다. Windows/Ubuntu의 합성 파일·격리 검사를 확인했으며 Portal 다운로드 연결·실제 사용자 kubectl E2E·WSL 고유 연동은 미완료입니다.
 
-프로젝트 소개에서 설계 판단·검증을 확인한 뒤 상세 구조도로 이어지는 순서입니다.
+<a id="구조도와-상세-문서"></a>
+## 대표 사례와 상세 문서
 
-### 클라우드와 사용자 자원 제공
-
-1. **프로젝트 소개**: [클라우드 구축과 사용자 자원 제공](docs/cloud-platform.md) — 장비 제약, 구성 방법, 포털 기능과 후속 확장
-2. **설계 판단·검증**: [인프라 설계 판단](docs/design-decisions.md) — 네트워크 변경과 구성 선택의 이유 · [검증 결과](docs/validation.md) — 검증 시점, 확인한 동작과 미확인 범위
-3. **상세 구조도**:
-   - [하드웨어](diagrams/01-hardware.md): 물리 서버 역할, 스위치와 스토리지 배치
-   - [OpenStack과 Kubernetes](diagrams/02-openstack-kubernetes.md): 관리 클러스터와 사용자 클러스터의 관계
-   - [네트워크](diagrams/04-network.md): 외부망·내부망·Octavia 관리망과 사설 API 경로
-   - [kubectl 명령의 인증·접속·복구 흐름](docs/kubectl-command-flow.md): token 없는 설정·브라우저 PKCE·keyring·공통 접속 경로와 검증 범위
-
-### GPU 기반 AI 챗봇
-
-1. **프로젝트 소개**: [GPU 기반 AI 챗봇 인프라](docs/ai-chatbot.md)
-2. **설계 판단·검증**: [G5 PostgreSQL HA 구축과 장애 검증](docs/g5-postgresql-ha.md) — 문제·설계·시험 결과·운영 한계 · [GPU 클러스터 선택](docs/design-decisions.md#독립된-gpu-클러스터) · [모델과 DB 저장 위치](docs/design-decisions.md#모델-파일과-서비스-db의-저장-위치) · [서비스 통합 확인 범위](docs/validation.md#서비스-통합-확인-범위) · [AI 데이터 기반의 인증·권한 검증](docs/validation.md#ai-데이터-기반의-인증권한-검증)
-3. **상세 구조도**:
-   - [AI 챗봇 전체 구조와 처리 흐름](docs/ai-chatbot-architecture.md): 완료된 데이터 기반과 후속 AI 서비스 설계를 구분한 그림 7개
-   - [OpenStack과 Kubernetes 및 GPU](diagrams/03-openstack-kubernetes-gpu.md): 독립 GPU 클러스터의 검증 Pod→DB 경로와 후속 서비스 연계
-   - [AI 데이터 기반의 설계와 동작](docs/ai-data-foundation-flow.md): DNS·etcd·TLS·계정 권한과 조건부 쓰기·삭제 검증을 설명하는 그림 5개
-   - [PKI 키와 인증서 흐름](docs/pki-key-certificate-flow.md): etcd와 PostgreSQL/PgBouncer를 위한 일반화한 설계 예시
+- [클라우드 구축과 사용자 자원 제공](docs/cloud-platform.md): Octavia·Kubernetes 문제 해결, 역할과 구현 범위, 기존 구조도
+- [PostgreSQL HA 구축과 장애 검증](docs/g5-postgresql-ha.md): watchdog 보정, 장애별 결과, DGX 데이터 경로와 정리
+- [AI 챗봇 소개](docs/ai-chatbot.md) · [전체 구조와 처리 흐름](docs/ai-chatbot-architecture.md): 완료된 데이터 기반과 후속 AI 서비스 설계
+- [kubectl 인증·접속·복구 흐름](docs/kubectl-command-flow.md): 선택한 접속 방식과 남은 사용자 시험
 
 ### FDP SSD 커널 인터페이스 연구
 
@@ -58,20 +48,13 @@
 2. **설계 판단·검증**: [구현과 문제 해결](docs/fdp-research.md#구현과-문제-해결) → [실제 장치 실험](docs/fdp-research.md#실제-장치-실험) → [결과와 해석의 구분](docs/fdp-research.md#결과와-해석의-구분)
 3. **상세 구조와 결과 그래프**: [연구 포트폴리오 PDF](pdf/fdp-research.pdf) 3~6쪽
 
-하드웨어·OpenStack–Kubernetes·GPU 연계·네트워크 구조도 4개는 2026-09-07 구성 정리본을 바탕으로 상태 표현을 정리했습니다. 실선은 기록에서 확인한 구성·기능 검증 관계, 점선은 설계·서비스 통합 범위를 나타냅니다. 실선이 현재 운영 상태나 전체 서비스 성공을 뜻하지는 않으며, 검증 시점과 후속 통합 이력은 각 문서에 표시했습니다.
-
-
-[AI 챗봇 전체 구조와 처리 흐름](docs/ai-chatbot-architecture.md)은 2026-10-16 설계를 바탕으로 10월 21일 G5 완료 상태를 반영한 문서입니다. 해당 문서의 실선은 확정된 설계 관계이며, 미결정 사항은 TBD, 구현을 연기한 범위는 [후속], 확정했지만 공개하지 않는 값은 비공개로 구분했습니다.
-
 ## PDF 포트폴리오
 
 - [클라우드 인프라 포트폴리오 5쪽](pdf/cloud-portfolio.pdf)
 - [FDP 연구 포트폴리오 6쪽](pdf/fdp-research.pdf)
 
-클라우드 PDF는 2026-09-07 공개본입니다. 이후 확인한 이력과 상태 구분은 Markdown 문서에서 확인할 수 있습니다.
+클라우드 PDF는 2026-10-21에 공개 문서와 맞춰 갱신했습니다. 실제 실행 날짜와 적용 범위는 연결된 검증 기록을 따릅니다.
 
 ## 기록과 공개 범위
 
-AI 문서의 이번 갱신 기준일은 2026-10-21이며, 클라우드·포털의 별도 진행 기록은 기존 10월 20일 범위를 유지합니다. 프로젝트별 실제 실행 검증일은 [검증 결과](docs/validation.md)에 따로 표시했습니다. 이 저장소는 설계와 경험을 설명하는 포트폴리오로, 운영 소스나 배포용 설정은 포함하지 않습니다. 장비명은 역할 기반 별칭을 사용하고 실제 주소·계정·인증정보·원본 운영 로그는 제외했습니다. PDF에서도 사진·이름·연락처·소속과 작성자 메타데이터를 제외했습니다.
-
-이번 갱신은 저장된 날짜별 근거와 공개 문서를 대조한 결과입니다. 운영 서버 재조회나 시험 재실행을 하지 않았으며 현재 동작을 직접 확인한 보고가 아닙니다.
+저장된 기록과 공개 문서를 재구성한 포트폴리오이며 현재 운영 상태를 직접 재검증한 보고는 아닙니다. 실제 주소·계정·인증정보·원본 운영 로그·인계문을 공개하지 않습니다. PDF에서도 사진·이름·연락처·소속과 작성자 메타데이터를 제외했습니다.
