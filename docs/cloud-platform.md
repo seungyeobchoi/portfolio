@@ -20,9 +20,13 @@ OpenStack·Ceph 기반 자원 제공 환경을 구축하고 Kubernetes 제공과
 
 **검증:** 수정 후 2026-10-11 새 Standard 1개(control plane 1대·worker 2대)를 신청했습니다. operator 복구·수동 상태 변경 없이 최초 세대의 생성·마무리 작업, 3노드와 API·CNI·CCM·CSI·스토리지 건강, UI ACTIVE와 성공 상태 유지를 확인했습니다. 이어 정상 삭제와 CAPI 하위 자원 부재, 기존 클러스터·원본 볼륨·Cloud 자원 ID·Nova/Neutron 사용량 보존을 대조했습니다.
 
-최종 **31항목은 보존·정합성 검증 범위**이며 성능 향상률이 아닙니다. 기존 볼륨 재연결·읽기·쓰기 거절 시험은 이번 재검증에서 반복하지 않았습니다. 단일 Standard의 당시 버전 결과를 모든 프로필·동시/대규모 요청이나 최신 접속·관측 변경본의 사용자 E2E로 확대하지 않습니다. [정확한 성공·제외 범위](validation.md#standard-e2e-20261011)
+최종 **31항목은 보존·정합성 검증 범위**이며 성능 향상률이 아닙니다. 기존 볼륨 재연결·읽기·쓰기 거절 시험은 이번 재검증에서 반복하지 않았습니다. 10월 11일 기록만으로 모든 프로필·동시/대규모 요청이나 후속 접속·관측 변경본의 사용자 E2E를 보장하지 않습니다. [정확한 성공·제외 범위](validation.md#standard-e2e-20261011)
 
-10월 19~20일 관측·제어 기능 일부를 실제 적용한 이력도 있습니다. 프로젝트 3개 중 1개는 자격증명 참조 조회 실패였고 당시 활성 workload 관측 대상은 없었습니다. 새 접속·다운로드·역할 UI·사용자 종단은 별도 잔여입니다. [구현과 실제 적용의 구분](validation.md#access-observation-20261018-20)
+**접속 준비의 차이:** 10월 21일에는 서명 파일 등록과 사용자 로그인 뒤 kubectl이 401로 중단됐습니다. API 서버가 내부 인증 이름을 해석하지 못했으며, 관리망 출발의 준비 검사로 CP 출발 인증 경로까지 증명할 수 없음을 확인했습니다. CP 한정 DNS·인증 관측과 최초 신뢰·현재 보안·일시 가용성 분리 코드를 준비하고, 10월 28일 backend·worker·publisher와 최신 프론트에 적용했습니다.
+
+**배포 후 사용자 검증:** 10월 28일 시험 계정의 Windows에서 새 단일 Standard(control plane 1대·worker 2대)를 검증했습니다. 생성·CP 인증 준비와 두 relay ACK, 서명 접속 파일 다운로드·검증·등록, 로그인·동시 kubectl·앱 DNS/exec/log/port-forward와 시험한 금지 권한의 거절을 확인했습니다. 읽기 전용 볼륨 연결·디렉터리 읽기·쓰기 거절·정상 해제, token 자연 만료 뒤 자동 갱신·재접속, 클러스터 정상 삭제와 접속 허가 만료·원본 볼륨 상태 및 공통 자원 보존까지 완료했습니다.
+
+이는 **당시 시험 계정·Windows·단일 Standard의 사용자 종단 결과**입니다. 볼륨 파일 전체 내용·해시, Development·Ubuntu/WSL·계정 정지·일반 신규 tenant·장기 용량 여유나 현재 운영 상태를 검증한 것은 아닙니다. 직전 초기 권한 설치 실패의 원인은 미확정이며 후속 성공으로 덮지 않았습니다. [실제 적용·성공·제외 범위](validation.md#standard-user-e2e-20261028)
 
 ## PostgreSQL HA와 watchdog 장애 검증
 
@@ -52,9 +56,9 @@ Cephadm으로 NVMe 기반 Ceph를 구축하고 Kolla-Ansible로 OpenStack을 배
 
 ## 공개 코드와 직접 확인할 자료
 
-공개한 [접속 파일 등록기](https://github.com/seungyeobchoi/portal-kubectl-access)는 Windows PowerShell과 Ubuntu Python 구현입니다. Windows PowerShell 5.1/7 각각 22개, Ubuntu 등록 25개와 메모리 시험 키의 서명·검증·등록 5개 검사를 확인했습니다. 합성·격리 시험이며 실제 사용자 kubectl 종단과 WSL 고유 연동은 미완료입니다.
+공개한 [접속 파일 등록기](https://github.com/seungyeobchoi/portal-kubectl-access)는 Windows PowerShell과 Ubuntu Python 구현입니다. Windows PowerShell 5.1/7 각각 22개, Ubuntu 등록 25개와 메모리 시험 키의 서명·검증·등록 5개 검사를 확인했습니다. 이 등록기 검사는 합성·격리 범위입니다. 별도 10월 28일 Windows·단일 Standard 시험에서 실제 Portal 서명 파일 등록과 사용자 종단을 확인했으며 Ubuntu/WSL 고유 연동은 남습니다.
 
-[PowerShell 코드](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/windows/Register-PortalKubeconfig.ps1) · [Python 코드](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/ubuntu/register_portal_kubeconfig.py) · [검증·제공 준비 상태](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/release-status.json) · [클라우드 PDF](../pdf/cloud-portfolio.pdf)
+[PowerShell 코드](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/windows/Register-PortalKubeconfig.ps1) · [Python 코드](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/ubuntu/register_portal_kubeconfig.py) · [등록기 준비 기록·10월 18일](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/release-status.json) · [클라우드 PDF](../pdf/cloud-portfolio.pdf)
 
 ## 본인의 기여
 

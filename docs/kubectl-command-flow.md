@@ -1,12 +1,12 @@
 # kubectl 명령의 인증·접속·복구 흐름
 
-설계 설명 기준일: 2026-10-18. 후속 기록 대조일: 2026-10-20. Kubernetes 제공 서비스에서 선택한 접속 방식의 공개 설계 설명이다. 내부 주소·계정·자원 식별자를 일반화했다. 그림은 운영 배포 완료를 뜻하지 않는다.
+10월 18일의 접속 설계와 10월 28일 배포 후 실제 사용자 시험을 구분해 설명한다. 내부 주소·계정·자원 식별자는 일반화했다. 실제 통과 범위는 시험 계정·Windows·단일 Standard이며 그림의 모든 분기·모든 환경을 검증한 것은 아니다.
 
 [포트폴리오 홈](../README.md) · [클라우드 프로젝트](cloud-platform.md)
 
 ## 1. 최초 준비와 명령 실행
 
-Portal은 소유권과 현재 접속 준비 조건을 확인한 뒤 token 없는 kubeconfig를 제공한다. 설정 파일에는 접속 주소·공개 CA·인증 도우미 실행 방법이 들어간다. 사용자 비밀번호·ID token·refresh token은 넣지 않는다.
+Portal은 소유권과 현재 접속 준비 조건을 확인한 뒤 token 없는 kubeconfig를 제공한다. 설정 파일에는 접속 주소·공개 CA·인증 도우미 실행 방법이 들어간다. 사용자 비밀번호·ID token·refresh token은 넣지 않는다. 10월 28일에는 실제 Portal 서명 ZIP을 독립 공개키로 검증·등록한 뒤 해당 Windows 설정으로 시험했다.
 
 ```mermaid
 sequenceDiagram
@@ -44,12 +44,12 @@ sequenceDiagram
 
 ## 2. 실제 Kubernetes 요청이 지나가는 경로
 
-아래는 공통 접속 gateway를 사용하는 확정 설계 관계다. 전체 사용자 종단 검증과 제품 배포는 남아 있다.
+아래는 공통 접속 gateway의 기존 설계 관계다. 10월 28일에는 배포 후 실제 Windows 사용자 요청·앱 응답과 시험한 권한 거절을 확인했다. Development·Ubuntu/WSL·일반 신규 tenant까지 완료한 것은 아니다.
 
 ```mermaid
 sequenceDiagram
     participant K as 사용자 PC의 kubectl
-    participant N as 학교 내부망 또는 VPN
+    participant N as 사용자 네트워크
     participant G as 공통 LB와 선택된 relay
     participant A as 사용자 클러스터 API
     K->>N: 클러스터 TLS 이름으로 HTTPS 요청
@@ -82,23 +82,31 @@ flowchart TD
 
 공식 도우미를 유지하고 사용자 취소·재시도를 선택했다. 무응답만으로 전체 캐시를 자동 삭제하거나 사용자 명령을 자동 재실행하지 않는다. 초기화 범위에는 같은 OS 계정의 다른 클러스터용 kubelogin 캐시도 포함될 수 있다. 도구·kubeconfig·서버 계정을 삭제하는 절차가 아니며, 실제 취소 전달과 초기화 경합의 제품 검증은 남아 있다.
 
-서비스 상태 UI는 서버 측 준비/경로 관측, 사용자 브라우저 조회 실패, 실제 계획 점검을 구분하는 방향으로 결정했다. VPN이 끊겨 상태를 못 받으면 확인 불가와 마지막 확인 시각을 표시한다. 이를 인증 서버 고장으로 단정하지 않는다. 공개 설정·공개키 조회 성공만으로 실제 로그인·token 갱신 성공을 보증하지 않는다. 상태 UI는 10월 18~19일 연결 코드·격리 검사를 마쳤지만 실제 역할 UI와 제품 연결 시험은 남아 있다. 19일 적용한 관측에서는 프로젝트 3개 중 2개 snapshot을 확인했고 1개는 자격증명 참조 조회 실패였다. 당시 활성 workload 관측 대상은 없었다.
+서비스 상태 UI는 서버 측 준비/경로 관측, 사용자 브라우저 조회 실패, 실제 계획 점검을 구분하는 방향으로 결정했다. VPN이 끊겨 상태를 못 받으면 확인 불가와 마지막 확인 시각을 표시한다. 이를 인증 서버 고장으로 단정하지 않는다. 공개 설정·공개키 조회 성공만으로 실제 로그인·token 갱신 성공을 보증하지 않는다. 10월 18~19일 연결 코드·격리 검사 뒤 28일에는 CP 출발 인증 상태·접속 준비 분리와 최신 안내를 실제 배포하고 일반/관리자 UI를 확인했다. 19일 적용한 관측에서는 프로젝트 3개 중 2개 snapshot을 확인했고 1개는 자격증명 참조 조회 실패였다. 당시 활성 workload 관측 대상은 없었다.
 
 ## 검증한 범위와 남은 범위
 
 | 구분 | 확인 수준 |
 |---|---|
-| 공식 도구의 Windows keyring 저장·재사용 | 시험 사용자 경로에서 확인 |
-| 실제 ID token 만료 후 갱신·동시 실행 | 시험 환경에서 확인 |
+| 공식 도구의 Windows keyring 저장·재사용 | 10월 28일 시험 계정·단일 Standard의 실제 경로에서 확인 |
+| 실제 ID token 만료 후 갱신·동시 실행 | 10월 28일 자연 만료 후 강제 옵션·재로그인 입력 없는 갱신·재접속과 동시 kubectl 확인 |
 | 손상·저장 실패·응답 보류 등 장애 조건 | 격리 시험으로 관측, 모든 장애의 자동 복구를 뜻하지 않음 |
 | 실제 kubectl 취소 전달·전체 초기화 경합 | 추가 검증 필요 |
-| Portal의 keyring 설정 제공·gateway 전체 사용자 종단 | 제품 연결·검증 미완료 |
-| 접속 파일 등록기·최초 신뢰 배포처 | Windows/Ubuntu 공통 구현·합성 등록 검증과 별도 GitHub HTTPS 배포처·운영 공개키 게시 완료. WSL 고유 연동·Portal 다운로드·사용자 E2E는 미완료 |
+| Portal 서명 파일·공통 경유 사용자 요청 | 10월 28일 Windows·단일 Standard의 생성·실제 접속/앱·권한 거절·RO 볼륨·자동 갱신·정상 삭제까지 확인 |
+| 접속 파일 등록기·최초 신뢰 배포처 | Windows/Ubuntu 공통 구현·합성 등록 검증과 별도 GitHub HTTPS 배포처·운영 공개키 게시 완료. Portal 다운로드·등록의 Windows 후속 실증과 구분하며 Ubuntu/WSL 고유 연동은 미완료 |
 
 ## 2026-10-18~20 후속 적용과 남은 범위
 
 최초 준비 자료는 [별도 공개 배포처](https://github.com/seungyeobchoi/portal-kubectl-access)에서 제공하도록 결정했고 운영 공개키를 게시했다. 추후 Portal HTTPS 전환 검증 뒤 직접 제공으로 전환하는 계획이다. 등록기 시험은 Windows PowerShell 5.1/7 각각 22개, Ubuntu 24.04 등록 25개와 실제 메모리 시험 키의 서명·검증·등록 5개 범위이며, 사용자 로그인·클러스터 API/RBAC·WSL 고유 연동 성공을 뜻하지 않는다.
 
 10월 20일 00:25 KST까지 제어 서비스 두 개의 Ready·실제 DB TLS와 중계 전용 runtime·CSR 준비를 확인한 기록이 있다. 중계 신원·unit 기동·ACK·제품 다운로드·실제 사용자 종단은 미완료다. Ready를 사용자 kubectl 성공으로 계산하지 않는다. [날짜별 구현·실제 적용·시험 범위](validation.md#access-observation-20261018-20)를 참조한다. 이번 문서 갱신을 위한 운영 재조회나 사용자 시험 재실행은 하지 않았다.
+
+## 2026-10-28 배포 후 실제 사용자 시험
+
+21일의 실제 사용자 로그인 뒤 kubectl 401은 API 서버 출발의 인증 DNS 실패였다. 관리망의 공개 설정/JWKS 조회나 relay ACK를 CP 출발 OIDC 성공으로 계산하지 않았다. 이후 CP 한정 DNS·인증 관측과 최초 신뢰/현재 보안/가용성 분리 코드를 준비하고 28일 제품에 적용했다.
+
+새 Windows·단일 Standard에서 서명 파일 검증·등록, 로그인·PKCE·keyring·동시 kubectl, 앱 DNS/exec/log/port-forward와 금지 권한 거절을 확인했다. 읽기 전용 볼륨의 디렉터리 읽기·쓰기 거절·정상 해제 뒤 token 자연 만료의 자동 갱신·재접속과 클러스터 정상 삭제까지 완료했다. 시험 세션·소유 캐시·프로세스를 정리했고 해당 클러스터는 삭제됐다.
+
+초기 실패 원인 미확정, 볼륨 전체 파일 내용/해시 미검증, Development·Ubuntu/WSL·계정 정지·일반 신규 tenant·장기 운영 범위를 [정확한 성공·제외 범위](validation.md#standard-user-e2e-20261028)에 정리했다. 이번 기록 정리를 위해 운영 접속이나 사용자 시험을 재실행하지 않았다.
 
 공식 참고: [Kubernetes exec 인증](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins), [int128 kubelogin](https://github.com/int128/kubelogin), [Keycloak OIDC](https://www.keycloak.org/securing-apps/oidc-layers).
