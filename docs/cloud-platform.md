@@ -28,6 +28,10 @@ OpenStack·Ceph 기반 자원 제공 환경을 구축하고 Kubernetes 제공과
 
 이는 **당시 시험 계정·Windows·단일 Standard의 사용자 종단 결과**입니다. 볼륨 파일 전체 내용·해시, Development·Ubuntu/WSL·계정 정지·일반 신규 tenant·장기 용량 여유나 현재 운영 상태를 검증한 것은 아닙니다. 직전 초기 권한 설치 실패의 원인은 미확정이며 후속 성공으로 덮지 않았습니다. [실제 적용·성공·제외 범위](validation.md#standard-user-e2e-20261028)
 
+**Development 후속 검증:** 10월 31일에는 시험 계정·Windows·새 Development 1개(control plane 1대·worker 1대)에서 생성, 서명 접속 파일 검증·등록, OIDC·동시 kubectl·앱·권한 거절 15개 검사를 확인했습니다. 정상 UI 삭제 뒤 CAPI 하위 자원 부재·접속 회수와 사용자 OpenStack 조회의 시험 자원 정리·공통 경로 보존까지 대조했습니다. 설정 flag 두 개를 실제 적용했으며 기존 Python 소스는 유지했습니다.
+
+두 노드는 같은 물리 호스트에 배치돼 호스트 장애 HA의 증거가 아닙니다. Development에서는 볼륨 재시험과 token 자연 만료 갱신을 검증하지 않았고, Ubuntu/WSL·일반 신규 tenant·장기 용량·현재 운영 상태도 별도입니다. 10월 28일 Standard의 성과를 다른 프로필에 그대로 확대하지 않습니다. [Development 성공·제외 범위](validation.md#development-user-e2e-20261031)
+
 ## PostgreSQL HA와 watchdog 장애 검증
 
 독립 GPU Kubernetes에서 사용할 DB를 OpenStack의 별도 VM에 두고, 리더 조정(Patroni·etcd), 접속 대상 선택(Octavia), watchdog의 책임을 분리했습니다. 재부팅 뒤 장치가 사라지는 문제는 커널 추가 모듈과 부팅 준비 의존 관계로 나누어 보정했습니다.
@@ -56,7 +60,7 @@ Cephadm으로 NVMe 기반 Ceph를 구축하고 Kolla-Ansible로 OpenStack을 배
 
 ## 공개 코드와 직접 확인할 자료
 
-공개한 [접속 파일 등록기](https://github.com/seungyeobchoi/portal-kubectl-access)는 Windows PowerShell과 Ubuntu Python 구현입니다. Windows PowerShell 5.1/7 각각 22개, Ubuntu 등록 25개와 메모리 시험 키의 서명·검증·등록 5개 검사를 확인했습니다. 이 등록기 검사는 합성·격리 범위입니다. 별도 10월 28일 Windows·단일 Standard 시험에서 실제 Portal 서명 파일 등록과 사용자 종단을 확인했으며 Ubuntu/WSL 고유 연동은 남습니다.
+공개한 [접속 파일 등록기](https://github.com/seungyeobchoi/portal-kubectl-access)는 Windows PowerShell과 Ubuntu Python 구현입니다. Windows PowerShell 5.1/7 각각 22개, Ubuntu 등록 25개와 메모리 시험 키의 서명·검증·등록 5개 검사를 확인했습니다. 이 등록기 검사는 합성·격리 범위입니다. 별도 Windows 시험의 Standard(10월 28일)와 Development(31일) 각각에서 실제 Portal 서명 파일 등록과 사용자 접속을 확인했으며 Ubuntu/WSL 고유 연동은 남습니다.
 
 [PowerShell 코드](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/windows/Register-PortalKubeconfig.ps1) · [Python 코드](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/ubuntu/register_portal_kubeconfig.py) · [등록기 준비 기록·10월 18일](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/release-status.json) · [클라우드 PDF](../pdf/cloud-portfolio.pdf)
 

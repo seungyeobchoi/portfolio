@@ -1,6 +1,6 @@
 # kubectl 명령의 인증·접속·복구 흐름
 
-10월 18일의 접속 설계와 10월 28일 배포 후 실제 사용자 시험을 구분해 설명한다. 내부 주소·계정·자원 식별자는 일반화했다. 실제 통과 범위는 시험 계정·Windows·단일 Standard이며 그림의 모든 분기·모든 환경을 검증한 것은 아니다.
+10월 18일의 접속 설계와 10월 28일 Standard·31일 Development의 실제 사용자 시험을 구분해 설명한다. 내부 주소·계정·자원 식별자는 일반화했다. 두 시험은 각각 시험 계정·Windows·단일 클러스터 범위이며 그림의 모든 분기·모든 환경을 검증한 것은 아니다.
 
 [포트폴리오 홈](../README.md) · [클라우드 프로젝트](cloud-platform.md)
 
@@ -44,7 +44,7 @@ sequenceDiagram
 
 ## 2. 실제 Kubernetes 요청이 지나가는 경로
 
-아래는 공통 접속 gateway의 기존 설계 관계다. 10월 28일에는 배포 후 실제 Windows 사용자 요청·앱 응답과 시험한 권한 거절을 확인했다. Development·Ubuntu/WSL·일반 신규 tenant까지 완료한 것은 아니다.
+아래는 공통 접속 gateway의 기존 설계 관계다. 10월 28일 Standard와 31일 Development 각각에서 실제 Windows 사용자 요청·앱 응답과 시험한 권한 거절을 확인했다. Ubuntu/WSL·일반 신규 tenant와 모든 복구 분기를 완료한 것은 아니다.
 
 ```mermaid
 sequenceDiagram
@@ -88,11 +88,12 @@ flowchart TD
 
 | 구분 | 확인 수준 |
 |---|---|
-| 공식 도구의 Windows keyring 저장·재사용 | 10월 28일 시험 계정·단일 Standard의 실제 경로에서 확인 |
+| 공식 도구의 Windows keyring 저장·재사용 | 10월 28일 Standard와 31일 Development의 시험 계정·단일 클러스터 실제 경로에서 각각 확인 |
 | 실제 ID token 만료 후 갱신·동시 실행 | 10월 28일 자연 만료 후 강제 옵션·재로그인 입력 없는 갱신·재접속과 동시 kubectl 확인 |
 | 손상·저장 실패·응답 보류 등 장애 조건 | 격리 시험으로 관측, 모든 장애의 자동 복구를 뜻하지 않음 |
 | 실제 kubectl 취소 전달·전체 초기화 경합 | 추가 검증 필요 |
 | Portal 서명 파일·공통 경유 사용자 요청 | 10월 28일 Windows·단일 Standard의 생성·실제 접속/앱·권한 거절·RO 볼륨·자동 갱신·정상 삭제까지 확인 |
+| Development의 사용자 경로 | 10월 31일 Windows·단일 2노드에서 서명 파일 등록·OIDC·동시 kubectl·앱·권한 거절 15검사와 정상 삭제·접속 회수·정리 확인. 볼륨·자연 만료 갱신은 미검증 |
 | 접속 파일 등록기·최초 신뢰 배포처 | Windows/Ubuntu 공통 구현·합성 등록 검증과 별도 GitHub HTTPS 배포처·운영 공개키 게시 완료. Portal 다운로드·등록의 Windows 후속 실증과 구분하며 Ubuntu/WSL 고유 연동은 미완료 |
 
 ## 2026-10-18~20 후속 적용과 남은 범위
@@ -108,5 +109,11 @@ flowchart TD
 새 Windows·단일 Standard에서 서명 파일 검증·등록, 로그인·PKCE·keyring·동시 kubectl, 앱 DNS/exec/log/port-forward와 금지 권한 거절을 확인했다. 읽기 전용 볼륨의 디렉터리 읽기·쓰기 거절·정상 해제 뒤 token 자연 만료의 자동 갱신·재접속과 클러스터 정상 삭제까지 완료했다. 시험 세션·소유 캐시·프로세스를 정리했고 해당 클러스터는 삭제됐다.
 
 초기 실패 원인 미확정, 볼륨 전체 파일 내용/해시 미검증, Development·Ubuntu/WSL·계정 정지·일반 신규 tenant·장기 운영 범위를 [정확한 성공·제외 범위](validation.md#standard-user-e2e-20261028)에 정리했다. 이번 기록 정리를 위해 운영 접속이나 사용자 시험을 재실행하지 않았다.
+
+## 2026-10-31 Development의 실제 사용자 시험
+
+새 Development(CP 1대·worker 1대)의 실제 생성 뒤 Windows에서 서명 파일 검증·등록, OIDC·PKCE·keyring·동시 kubectl과 앱 DNS/exec/log/port-forward·권한 거절 등 15검사를 확인했다. 정상 UI 삭제 후 CAPI 하위 자원 부재·접속 회수·다운로드 거절과 사용자 OpenStack 조회의 시험 자원 정리·공통 경로 보존을 대조했다. 시험 Pod·소유 캐시·세션·하위 프로세스를 정리했다.
+
+두 노드의 같은 물리 호스트 배치는 HA 증거가 아니다. Development의 볼륨 재시험·token 자연 만료 갱신은 포함하지 않았으며, 볼륨·자연 만료 갱신의 성공은 위 Standard 시험에만 해당한다. Ubuntu/WSL·일반 신규 tenant·장기 용량·현재 운영 상태는 별도다. [Development 성공·제외 범위](validation.md#development-user-e2e-20261031)
 
 공식 참고: [Kubernetes exec 인증](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins), [int128 kubelogin](https://github.com/int128/kubelogin), [Keycloak OIDC](https://www.keycloak.org/securing-apps/oidc-layers).

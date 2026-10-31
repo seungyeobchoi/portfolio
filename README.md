@@ -12,7 +12,7 @@
 | 사례 | 본인이 판단한 내용 | 확인한 결과와 범위 |
 |---|---|---|
 | [Octavia 관리망 연결](docs/cloud-platform.md#octavia-관리망-연결-문제-해결) | 외부 스위치 권한 제약을 분석하고 기존 관리망·VXLAN을 유지하는 내부 VLAN 경로 선택 | 시험용 LB 생성·ACTIVE/ONLINE·삭제 후 정리 확인. 처리량 개선을 측정한 결과는 아님 |
-| [Kubernetes 생성·정리](docs/cloud-platform.md#kubernetes-제공-서비스로-확장) | 생성 단계와 서비스 완료를 분리하고 상태·API·실제 자원으로 결과 대조 | 10월 28일 시험 계정·Windows·단일 Standard 생성부터 kubectl·앱·RO 볼륨·자동 갱신·정상 삭제까지 확인. 다른 환경·현재 운영 상태와 구분 |
+| [Kubernetes 생성·정리](docs/cloud-platform.md#kubernetes-제공-서비스로-확장) | 생성 단계와 서비스 완료를 분리하고 상태·API·실제 자원으로 결과 대조 | 시험 계정·Windows에서 Standard(10월 28일)와 Development(31일) 각 1개의 생성·접속·앱·정상 삭제 확인. RO 볼륨·자연 만료 갱신은 Standard의 별도 시험 |
 | [PostgreSQL HA와 watchdog](docs/g5-postgresql-ha.md) | 리더 조정·연결 대상 선택·watchdog의 책임과 장애별 성공 조건 분리 | 계획 전환·종료 유지 시 자동 승격·재합류·DGX Pod TLS/SQL·정리 확인. 모델 응답·앱 전체 E2E는 후속 |
 | FDP 커널 인터페이스 | 응용 프로그램부터 NVMe 드라이버까지 I/O 경로 확장, 플래그 충돌 분석·수정 | 실제 장치의 데이터 배치와 WAF·TPM 비교 실험 |
 
@@ -22,17 +22,17 @@
 | 프로젝트 | 시작·구축 시점 | 확인한 성과와 범위 |
 |---|---|---|
 | [사설 클라우드와 볼륨 포털](docs/cloud-platform.md) | 2026.05 ~ 2026.07.31 1차 구축 | OpenStack·Ceph 통합, 테스트·관리자 계정의 볼륨 신청·관리 기능 검증. 실제 사용자 도입 사례 없음 |
-| [Kubernetes 제공 서비스](docs/cloud-platform.md#kubernetes-제공-서비스로-확장) | 2026.08 시작 | 시험 계정의 Windows·단일 Standard 사용자 종단 검증 완료(2026-10-28). Development·Ubuntu/WSL·일반 신규 tenant·전체 운영 인수는 후속 |
+| [Kubernetes 제공 서비스](docs/cloud-platform.md#kubernetes-제공-서비스로-확장) | 2026.08 시작 | 시험 계정·Windows의 단일 Standard(2026-10-28)와 단일 Development(31일) 사용자 시험·정리 확인. Ubuntu/WSL·일반 신규 tenant·전체 운영 인수는 후속 |
 | [GPU 기반 AI 챗봇](docs/ai-chatbot.md) | 2026.08 시작 | 2026-10-21 데이터 기반 시험·정리 완료. GPU 모델과 AI 애플리케이션 통합은 후속 |
 | [FDP SSD 커널 인터페이스](docs/fdp-research.md) | 석사 연구 | **커널 구현·실장치 실험 완료** — Linux·ext4 인터페이스와 실제 SSD의 데이터 배치·WAF·TPM 실험 |
 
 ## 코드와 검증 바로 보기
 
 - **[접속 파일 등록기 공개 코드](https://github.com/seungyeobchoi/portal-kubectl-access)**: [PowerShell](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/windows/Register-PortalKubeconfig.ps1) · [Python](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/ubuntu/register_portal_kubeconfig.py) · [등록기 준비 기록·10월 18일](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/release-status.json)
-- **[날짜별 검증 결과](docs/validation.md)**: [Standard 사용자 종단](docs/validation.md#standard-user-e2e-20261028) · [10월 11일 생성·삭제](docs/validation.md#standard-e2e-20261011) · [DB 장애 시험·정리](docs/validation.md#g5-closeout-20261021)
+- **[날짜별 검증 결과](docs/validation.md)**: [Standard 사용자 종단](docs/validation.md#standard-user-e2e-20261028) · [Development 사용자 종단](docs/validation.md#development-user-e2e-20261031) · [10월 11일 생성·삭제](docs/validation.md#standard-e2e-20261011) · [DB 장애 시험·정리](docs/validation.md#g5-closeout-20261021)
 - **[개발·검증 방식](docs/cloud-platform.md#codex-development-validation)**: 본인 판단, Codex 지원, 구현·격리 시험·실제 적용·종단 시험의 구분
 
-공개 코드는 서명 검증·접속 파일 등록 도구입니다. 등록기의 합성·격리 검사와 별도로, 10월 28일 시험 계정의 Windows에서 Portal 서명 파일 등록·로그인·kubectl·앱·정리까지 확인했습니다. Ubuntu/WSL 고유 연동과 모든 사용자·환경의 검증은 후속입니다.
+공개 코드는 서명 검증·접속 파일 등록 도구입니다. 등록기의 합성·격리 검사와 별도로, 시험 계정의 Windows에서 10월 28일 Standard와 31일 Development 각각의 Portal 서명 파일 등록·로그인·kubectl·앱·정리를 확인했습니다. Ubuntu/WSL 고유 연동과 모든 사용자·환경의 검증은 후속입니다.
 
 <a id="구조도와-상세-문서"></a>
 ## 대표 사례와 상세 문서
@@ -50,10 +50,10 @@
 
 ## PDF 포트폴리오
 
-- [클라우드 인프라 포트폴리오 6쪽](pdf/cloud-portfolio.pdf)
+- [클라우드 인프라 포트폴리오 7쪽](pdf/cloud-portfolio.pdf)
 - [FDP 연구 포트폴리오 6쪽](pdf/fdp-research.pdf)
 
-클라우드 PDF에는 Standard의 배포 후 사용자 종단 결과와 적용 범위를 함께 정리했습니다. 실제 실행 날짜와 한계는 연결된 검증 기록을 따릅니다.
+클라우드 PDF에는 Standard와 Development의 날짜별 사용자 시험 결과와 서로 다른 검증 범위를 정리했습니다. 실제 실행 날짜와 한계는 연결된 검증 기록을 따릅니다.
 
 ## 기록과 공개 범위
 
