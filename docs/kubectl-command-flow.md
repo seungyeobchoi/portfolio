@@ -1,6 +1,6 @@
 # kubectl 명령의 인증·접속·복구 흐름
 
-10월 18일의 접속 설계와 10월 28일 Standard·31일 Development의 실제 사용자 시험을 구분해 설명한다. 내부 주소·계정·자원 식별자는 일반화했다. 두 시험은 각각 시험 계정·Windows·단일 클러스터 범위이며 그림의 모든 분기·모든 환경을 검증한 것은 아니다.
+10월 18일의 접속 설계와 Windows Standard(28일)·Development(31일), 11월 2일 원격 Linux의 실제 사용자 시험을 구분해 설명한다. 내부 주소·계정·자원 식별자는 일반화했다. 각 시험의 환경과 클러스터 범위만 확인했으며 그림의 모든 분기·모든 환경을 검증한 것은 아니다.
 
 [포트폴리오 홈](../README.md) · [클라우드 프로젝트](cloud-platform.md)
 
@@ -44,7 +44,7 @@ sequenceDiagram
 
 ## 2. 실제 Kubernetes 요청이 지나가는 경로
 
-아래는 공통 접속 gateway의 기존 설계 관계다. 10월 28일 Standard와 31일 Development 각각에서 실제 Windows 사용자 요청·앱 응답과 시험한 권한 거절을 확인했다. Ubuntu/WSL·일반 신규 tenant와 모든 복구 분기를 완료한 것은 아니다.
+아래는 공통 접속 gateway의 기존 설계 관계다. Windows의 10월 28일 Standard·31일 Development와 아래 11월 2일 원격 Linux 조건에서 실제 사용자 요청·앱 응답·시험한 권한 거절을 확인했다. WSL·일반 Linux 환경·일반 신규 tenant와 모든 복구 분기를 완료한 것은 아니다.
 
 ```mermaid
 sequenceDiagram
@@ -94,6 +94,8 @@ flowchart TD
 | 실제 kubectl 취소 전달·전체 초기화 경합 | 추가 검증 필요 |
 | Portal 서명 파일·공통 경유 사용자 요청 | 10월 28일 Windows·단일 Standard의 생성·실제 접속/앱·권한 거절·RO 볼륨·자동 갱신·정상 삭제까지 확인 |
 | Development의 사용자 경로 | 10월 31일 Windows·단일 2노드에서 서명 파일 등록·OIDC·동시 kubectl·앱·권한 거절 15검사와 정상 삭제·접속 회수·정리 확인. 볼륨·자연 만료 갱신은 미검증 |
+| 원격 Linux의 사용자 경로 | 11월 2일 서버 CLI·수동 keyring·Windows 브라우저/SSH 포워딩·임시 이름 매핑 조건의 별도 Development에서 cold 로그인·앱/권한 13검사·자연 만료 갱신과 정리 확인 |
+| callback 포트 대체 | 같은 날 별도 시험에서 8000 점유→18000 cold 로그인 8검사·정리. 양쪽 포트 점유·취소·모든 복구 분기는 미검증 |
 | 접속 파일 등록기·최초 신뢰 배포처 | Windows/Ubuntu 공통 구현·합성 등록 검증과 별도 GitHub HTTPS 배포처·운영 공개키 게시 완료. Portal 다운로드·등록의 Windows 후속 실증과 구분하며 Ubuntu/WSL 고유 연동은 미완료 |
 
 ## 2026-10-18~20 후속 적용과 남은 범위
@@ -115,5 +117,13 @@ flowchart TD
 새 Development(CP 1대·worker 1대)의 실제 생성 뒤 Windows에서 서명 파일 검증·등록, OIDC·PKCE·keyring·동시 kubectl과 앱 DNS/exec/log/port-forward·권한 거절 등 15검사를 확인했다. 정상 UI 삭제 후 CAPI 하위 자원 부재·접속 회수·다운로드 거절과 사용자 OpenStack 조회의 시험 자원 정리·공통 경로 보존을 대조했다. 시험 Pod·소유 캐시·세션·하위 프로세스를 정리했다.
 
 두 노드의 같은 물리 호스트 배치는 HA 증거가 아니다. Development의 볼륨 재시험·token 자연 만료 갱신은 포함하지 않았으며, 볼륨·자연 만료 갱신의 성공은 위 Standard 시험에만 해당한다. Ubuntu/WSL·일반 신규 tenant·장기 용량·현재 운영 상태는 별도다. [Development 성공·제외 범위](validation.md#development-user-e2e-20261031)
+
+## 2026-11-02 원격 Linux와 callback 대체 시험
+
+원격 Linux 서버의 CLI·기존 암호화 keyring 수동 해제와 Windows 브라우저의 SSH 포워딩을 사용했다. 임시 인증 이름 매핑 조건에서 별도 Development의 cold OIDC/PKCE·동시 캐시 명령·앱/권한 13검사·300초 ID token 자연 만료 후 동시 갱신을 확인했다. 시험 도구의 keyring 속성·응답 형식 오판은 소유자·서명 검사를 보존하며 보정했고 공식 로그인 도구나 Portal 제품의 교체로 표현하지 않는다.
+
+이후 다른 Development 시험에서 callback 8000을 소유 소켓으로 점유해 공식 도구의 18000 대체와 cold 로그인·정리 8검사를 확인했다. 앱·자연 만료 갱신은 이 callback 시험에서 다시 수행하지 않았다. 두 구간 모두 정상 Portal 삭제·CAPI 5종 0·접속 회수·소유 cache/세션 정리와 임시 hosts 원복을 확인했다. 독립 OpenStack 잔류 자원 조회는 없었다.
+
+이 결과는 위 서버·브라우저 조건에 한정된다. WSL·일반 Linux 환경, 두 callback 포트 동시 점유·취소·네트워크/저장 실패 전체, 계정 정지·볼륨 재시험·HA·장기 운영은 남는다. [시도별 성공·정리·제외 범위](validation.md#linux-client-e2e-20261102)를 참조한다.
 
 공식 참고: [Kubernetes exec 인증](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins), [int128 kubelogin](https://github.com/int128/kubelogin), [Keycloak OIDC](https://www.keycloak.org/securing-apps/oidc-layers).

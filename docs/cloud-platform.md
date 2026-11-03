@@ -32,6 +32,16 @@ OpenStack·Ceph 기반 자원 제공 환경을 구축하고 Kubernetes 제공과
 
 두 노드는 같은 물리 호스트에 배치돼 호스트 장애 HA의 증거가 아닙니다. Development에서는 볼륨 재시험과 token 자연 만료 갱신을 검증하지 않았고, Ubuntu/WSL·일반 신규 tenant·장기 용량·현재 운영 상태도 별도입니다. 10월 28일 Standard의 성과를 다른 프로필에 그대로 확대하지 않습니다. [Development 성공·제외 범위](validation.md#development-user-e2e-20261031)
 
+**Linux 후속 검증:** 11월 2일에는 원격 Linux 서버의 CLI와 Windows 브라우저를 SSH 포워딩으로 연계하고, 기존 암호화 keyring의 수동 해제·임시 이름 매핑 조건에서 별도 Development를 시험했습니다. 실제 cold OIDC·PKCE, 동시 캐시 명령·앱·권한 13검사, 300초 ID token 자연 만료 후 동시 갱신을 확인했습니다. 별도 callback 시험에서는 기본 포트 8000 점유 중 18000 대체 로그인과 8개 검사를 통과했습니다. 두 시험의 정상 Portal 삭제·CAPI 하위 자원 부재·접속 회수·소유 세션 정리와 임시 설정 원복을 확인했습니다.
+
+이 Linux 결과는 시험 계정·서버 한 대의 위 조건에 한정됩니다. 독립 OpenStack 잔류 자원 조회, 볼륨 재시험·WSL·일반 신규 tenant·HA·장기 용량·현재 운영은 포함하지 않습니다. callback 시험에서 앱·자연 만료 갱신을 다시 수행한 것도 아닙니다. [시도별 성공·정리·제외 범위](validation.md#linux-client-e2e-20261102)
+
+## Registry의 인증·준비 상태를 격리 검증
+
+Nginx 인증 proxy의 HTTP 생존 검사만 성공해도 TLS가 실패할 수 있음을 시험했습니다. 준비 검사를 CA·이름 검증 HTTPS와 backend 응답으로 보정하고, 잘못된 시험 인증서에서 NotReady·정상본 복원 후 Ready를 재시작 없이 확인했습니다. 이전 인증서 자동 유지나 운영 인증서 갱신 전체의 복구 보장을 뜻하지 않습니다.
+
+11월 2일에는 임시 Pod의 실제 Registry 이미지와 Nginx로 단계적 blob 업로드·manifest 게시, 읽기 계정의 GET/HEAD와 내용·digest 일치, 쓰기 요청 거절을 확인했습니다. backend의 Pod 외부 직접 접근 경계와 시험 자원 정리도 대조했습니다. 작은 합성 HTTP API fixture이며 운영 Registry 전환, CRI/containerd pull·Kaniko·대용량·동시성·영구 데이터 복구는 미검증입니다. [격리 시험 결과](validation.md#registry-isolated-20261101-02) · [건강 검사 판단](design-decisions.md#registry의-생존-준비-상태와-프로토콜-검증을-분리)
+
 ## PostgreSQL HA와 watchdog 장애 검증
 
 독립 GPU Kubernetes에서 사용할 DB를 OpenStack의 별도 VM에 두고, 리더 조정(Patroni·etcd), 접속 대상 선택(Octavia), watchdog의 책임을 분리했습니다. 재부팅 뒤 장치가 사라지는 문제는 커널 추가 모듈과 부팅 준비 의존 관계로 나누어 보정했습니다.
@@ -60,7 +70,7 @@ Cephadm으로 NVMe 기반 Ceph를 구축하고 Kolla-Ansible로 OpenStack을 배
 
 ## 공개 코드와 직접 확인할 자료
 
-공개한 [접속 파일 등록기](https://github.com/seungyeobchoi/portal-kubectl-access)는 Windows PowerShell과 Ubuntu Python 구현입니다. Windows PowerShell 5.1/7 각각 22개, Ubuntu 등록 25개와 메모리 시험 키의 서명·검증·등록 5개 검사를 확인했습니다. 이 등록기 검사는 합성·격리 범위입니다. 별도 Windows 시험의 Standard(10월 28일)와 Development(31일) 각각에서 실제 Portal 서명 파일 등록과 사용자 접속을 확인했으며 Ubuntu/WSL 고유 연동은 남습니다.
+공개한 [접속 파일 등록기](https://github.com/seungyeobchoi/portal-kubectl-access)는 Windows PowerShell과 Ubuntu Python 구현입니다. Windows PowerShell 5.1/7 각각 22개, Ubuntu 등록 25개와 메모리 시험 키의 서명·검증·등록 5개 검사를 확인했습니다. 이 등록기 검사는 합성·격리 범위입니다. 별도 Windows 시험의 Standard(10월 28일)와 Development(31일), 11월 2일 위 원격 Linux 조건에서 실제 서명 파일 등록과 사용자 접속을 확인했습니다. WSL·일반 Linux 환경 전체의 성공으로 확대하지 않습니다.
 
 [PowerShell 코드](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/windows/Register-PortalKubeconfig.ps1) · [Python 코드](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/ubuntu/register_portal_kubeconfig.py) · [등록기 준비 기록·10월 18일](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/release-status.json) · [클라우드 PDF](../pdf/cloud-portfolio.pdf)
 

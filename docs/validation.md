@@ -2,7 +2,7 @@
 
 [README](../README.md#구조도와-상세-문서) · 프로젝트 소개: [클라우드](cloud-platform.md) · [AI 챗봇](ai-chatbot.md) · [FDP 연구](fdp-research.md)
 
-작업·검증 기록에서 확인한 구축·구현 성과와 실행 결과를 정리했습니다. 10월 28일은 CP 인증 코드의 실제 배포와 시험 계정·Windows·단일 Standard 사용자 종단 결과이고, 31일 Development 시험은 별도 범위로 기록합니다. 과거 실패·당시 미완료와 후속 성공을 날짜별로 구분하며, 문서 정리일을 현재 운영 재검증일로 사용하지 않습니다. AI 데이터 기반의 기존 기록은 해당 실행 범위로 유지합니다.
+작업·검증 기록에서 확인한 구축·구현 성과와 실행 결과를 정리했습니다. Windows Standard(10월 28일)·Development(31일), 원격 Linux 사용자 시험(11월 2일)과 Registry 격리 검증을 각각의 환경·범위로 기록합니다. 과거 실패·당시 미완료와 후속 성공을 날짜별로 구분하며, 문서 정리일을 현재 운영 재검증일로 사용하지 않습니다. AI 데이터 기반의 기존 기록은 해당 실행 범위로 유지합니다.
 
 ## 확인한 구축과 실행 결과
 
@@ -19,6 +19,8 @@
 | G5 데이터 기반 마감 | 2026-10-21 | HA 시나리오·DGX 인증/SQL 후 임시 DB·계정·HBA 정리, 양쪽 PG·etcd·Octavia 최종 대조 | 합의된 G5 범위 완료. 백업/PITR·전체 AI 서비스 인수는 후속 |
 | Standard 사용자 종단 | 2026-10-28 | CP 인증·제품 배포 후 Windows 접속·앱·권한 거절·RO 볼륨·자연 만료 자동 갱신·정상 삭제 | 시험 계정·단일 Standard. 다른 환경·장기 안정성·현재 운영 상태는 별도 |
 | Development 사용자 종단 | 2026-10-31 | 설정 적용 후 Windows 접속·앱·권한 거절 15검사, 정상 삭제·접속 회수와 시험 자원 정리 대조 | 시험 계정·단일 2노드 Development. 볼륨 재시험·자연 만료 갱신·HA·다른 환경·현재 운영은 미검증 |
+| Linux 사용자·callback 대체 | 2026-11-02 | 원격 Linux cold OIDC·앱/권한 13검사·자연 만료 갱신, 별도 포트 대체 8검사·정상 삭제·접속 회수·임시 설정 원복 | 시험 계정·원격 서버·Windows 브라우저/SSH 포워딩·수동 keyring·임시 이름 매핑. 독립 Cloud 잔류 자원 조회·WSL·일반 환경 미검증 |
+| Registry 격리 통합 | 2026-11-01~02 | 인증·준비 상태 오류/복구, 실제 Registry의 업로드·읽기·내용 정합성·쓰기 거절 및 시험 자원 정리 | 합성 작은 HTTP API fixture. 운영 인증 전환·실제 CRI pull·Kaniko·성능·영구 복구 미검증 |
 | FDP 연구 | 석사 연구 | 커널 인터페이스 구현, 실제 SSD의 데이터 배치 확인과 WAF·TPM 비교 실험 완료 | 연구 환경의 커널 인터페이스와 배치 전략 |
 
 네트워크와 자원의 기능 검증은 전체 서비스의 무중단·장기 안정성 또는 처리량 향상 검증과 구분합니다.
@@ -100,11 +102,48 @@ Development 2노드·Ubuntu/WSL·계정 정지의 실제 영향 범위와 시험
 
 Ubuntu/WSL 실제 OIDC·keyring·클라이언트, 계정 정지·남은 lifecycle·일반 신규 tenant의 최초 망·모든 장애·장기 안정성과 현재 운영 상태는 미검증입니다. Linux 환경 확인과 세션 해제 방식 선택은 준비 단계이며 실제 Linux 사용자 접속 성공이 아닙니다. AI 전체 E2E나 전체 서비스 인수 완료로 확대하지 않습니다.
 
+위 10월 31일의 Linux 미완료·자연 만료 제외는 당시 Windows 시험의 범위입니다. 이후 Linux에서 확인한 항목은 아래 별도 결과를 따르며, Windows 시험을 다시 수행했다고 계산하지 않습니다.
+
+<a id="linux-client-e2e-20261102"></a>
+## 2026-11-02 원격 Linux 사용자 시험과 callback 대체
+
+대상은 시험 계정과 원격 Linux 서버 한 대, 별도 Development 시험 클러스터입니다. CLI·기존 암호화 keyring의 수동 해제는 Linux에서, 인증 브라우저는 Windows에서 SSH 포워딩으로 연계했습니다. 임시 인증 이름 매핑을 사용하고 각 구간 종료 시 원본 hash로 복구했습니다. Linux 데스크톱·WSL·일반 배포 환경 전체의 성공이 아닙니다.
+
+### 실제 성공과 시도 이력
+
+최초 두 시도는 keyring 입력 대기 중 종료돼 kubectl·브라우저 인증 전에 중단됐습니다. 입력 대기 시간과 도구 제한은 대조했지만 초기 예외 원인 전체를 확정하지 않았습니다. 세 번째는 cold 로그인 후 시험 도구가 keyring 속성을 정확히 두 개로 가정해 cache 확인·정리를 끝내지 못했습니다. 표준 Generic 속성·응답 형식 호환을 보정하면서 필수 소유 속성·서명·사용자 검증은 유지했고 소유 cache를 복구·정리했습니다. 공식 kubelogin·Portal 제품·IdP·PAM을 교체한 것이 아닙니다.
+
+최종 정상 시험과 이후 callback 대체 시험은 별개입니다.
+
+| 구간 | 실제 확인한 결과 | 정리·한계 |
+|---|---|---|
+| 18:28 Linux 정상 경로 | 서명 파일 검증·등록 후 cold kubectl·OIDC/PKCE·keyring 소유 cache, 동시 캐시 명령 2개, 앱·권한 13검사, 300초 ID token 자연 만료 후 동시 갱신 명령 2개 | 앱 Pod·소유 cache·로그인 세션·하위 프로세스·시험 provider와 브라우저 정리. 토큰 반출 없음 |
+| 22:57 callback 대체 | 별도 새 Development에서 기본 callback 8000 점유 중 공식 도구가 18000을 사용, cold 로그인·서명 사용자 cache 등 8검사 | 소유 소켓·cache·로그아웃·provider·브라우저 정리. 앱·캐시 동시 명령·자연 만료 갱신은 이 구간에서 반복하지 않음 |
+| 각 클러스터 정상 삭제 | 정상 Portal UI DELETE 뒤 생성/삭제 요청 DELETED, CAPI 하위 5종 각각 0, route tombstone·유효 ACK 0·실제 다운로드 guard 거절·사용자 UI DELETED | 독립 OpenStack 관리자 API/CLI의 잔류 자원 목록은 조회하지 않음. CAPI 0을 Cloud 자원 전체 부재 조회로 표현하지 않음 |
+| 임시 환경 원복 | 각 시험의 소유 hosts 행 제거·원본 hash 일치, 소유 cache·세션 종료 | 기존 keyring·등록 파일·공개 support는 보존. 다른 사용자·전역 설정 정리가 아님 |
+
+두 callback 포트 동시 점유·취소·추가 네트워크/저장 실패, 계정 정지·일반 신규 tenant 망, 볼륨 재시험·HA·장기 10GiB·현재 운영과 전체 서비스 인수는 미검증입니다. 임시 이름 매핑의 성공은 정식 DNS·공개 HTTPS 개통을 증명하지 않습니다.
+
+<a id="registry-isolated-20261101-02"></a>
+## 2026-11-01~02 Registry 인증·준비 상태의 격리 검증
+
+실제 Kubernetes의 임시 Pod·합성 인증서와 계정으로 시험했습니다. 운영 Registry·Secret·소비자 workload를 전환한 배포 검증이 아닙니다.
+
+| 시험 | 확인한 결과 | 구분할 한계 |
+|---|---|---|
+| Nginx 인증·접근 경계 | 비특권·read-only root·token mount 없는 시험 Nginx에서 합성 계정의 허용/거절, backend 전달 시 Authorization 제거 확인 | 초기 backend는 합성 응답 서버. 실제 Registry 프로토콜과 별도 |
+| TLS와 준비 상태 | 잘못된 시험 cert/key에서 TLS 실패에도 HTTP 생존·기존 준비 응답이 200인 한계 발견. 준비 검사를 CA/이름 검증 HTTPS와 backend 응답으로 보정한 뒤 정상 Ready→오류 NotReady→복원 Ready, 재시작 0 확인 | 이전 인증서 자동 유지·자동 복구나 운영 인증서 갱신 전체의 보장 아님 |
+| 실제 Registry API | 같은 임시 Pod의 고정 Registry 2.8.3와 Nginx에서 작은 blob 2개의 단계적 PATCH/PUT·manifest 게시, 읽기 GET/HEAD와 실제 bytes/digest 일치 | HTTP API의 작은 합성 fixture. 독립 CRI/containerd pull·Kaniko build·대용량/동시성 성능 미검증 |
+| 역할·삭제 동작 | 읽기 계정의 POST/PATCH/PUT/DELETE가 401. 게시자의 manifest 삭제는 backend의 405 UNSUPPORTED, 진행 업로드 취소는 204 | manifest 삭제 미지원과 인증 거절을 같은 원인으로 처리하지 않음 |
+| 네트워크·정리 | Registry backend는 Pod 내부 loopback만 수신, Pod 외부 직접 접근 거절·시험 proxy 경유 확인. 시험 port-forward 종료·정확한 UID 자원 삭제와 부재 확인 | 운영 DNS/endpoint 연결·운영 데이터 변경 없음. 실제 Registry 통합 구간의 임시 자원 4개 정리 |
+
+운영 Registry 인증 전환·소비자 image pull·자격 증명 교체, 영구 데이터 복구와 장기 sizing은 후속입니다. 자동 교체 방식 선택과 연결 경로 조사는 구현·타이머 활성화·운영 성공으로 합산하지 않습니다. AI 모델·Embedding·전체 AI E2E가 완료됐다는 근거도 아닙니다. [건강 검사와 프로토콜 검증의 판단](design-decisions.md#registry의-생존-준비-상태와-프로토콜-검증을-분리)을 참조하세요.
+
 ## 서비스 통합 확인 범위
 
 | 대상 | 확인한 이력·범위 | 미확인 범위 |
 |---|---|---|
-| 포털의 Kubernetes 제공 | 10월 11일 당시 생성·삭제·31항목 대조; 28일 Windows·단일 Standard의 접속·앱·RO 볼륨·자동 갱신·삭제; 31일 별도 단일 Development의 접속·앱 15검사·삭제·접속 회수·정리 | Development의 볼륨·자연 만료 갱신·HA, Ubuntu/WSL·계정 정지·일반 신규 tenant·장기 용량·모든 장애 및 현재 운영 상태 |
+| 포털의 Kubernetes 제공 | 기존 Windows Standard·Development 기록 유지; 11월 2일 원격 Linux의 별도 Development 로그인·앱/권한·자연 만료 갱신과 callback 대체·정상 삭제·접속 회수 | Linux의 독립 Cloud 잔류 자원 조회·볼륨 재시험, WSL·일반 Linux/신규 tenant·계정 정지·HA·장기 용량·모든 장애 및 현재 운영 상태 |
 | AI 챗봇 | G5 완료: DB HA 시나리오·합성 벡터·DGX Pod의 DNS/TLS/인증/SQL·접근 제한·임시 자원 정리 | Portal 요청부터 모델 응답까지 전체 E2E, PgBouncer·앱 연동·성능·백업/PITR 및 전체 운영 인수 |
 
 단일 GPU 물리 노드 장애에 대한 고가용성은 제공하지 않습니다.
