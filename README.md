@@ -30,7 +30,7 @@
 ## 코드와 검증 바로 보기
 
 - **[접속 파일 등록기 공개 코드](https://github.com/seungyeobchoi/portal-kubectl-access)**: [PowerShell](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/windows/Register-PortalKubeconfig.ps1) · [Python](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/clients/ubuntu/register_portal_kubeconfig.py) · [등록기 준비 기록·10월 18일](https://github.com/seungyeobchoi/portal-kubectl-access/blob/main/release-status.json)
-- **[날짜별 검증 결과](docs/validation.md)**: [Windows Standard](docs/validation.md#standard-user-e2e-20261028) · [Windows Development](docs/validation.md#development-user-e2e-20261031) · [Linux·callback 대체](docs/validation.md#linux-client-e2e-20261102) · [Registry 격리 시험](docs/validation.md#registry-isolated-20261101-02) · [DB 장애 시험·정리](docs/validation.md#g5-closeout-20261021)
+- **[날짜별 검증 결과](docs/validation.md)**: [Windows Standard](docs/validation.md#standard-user-e2e-20261028) · [Windows Development](docs/validation.md#development-user-e2e-20261031) · [Linux·callback 대체](docs/validation.md#linux-client-e2e-20261102) · [클라이언트 오류 격리 시험](docs/validation.md#kubectl-client-errors-20261104) · [Registry 격리 시험](docs/validation.md#registry-isolated-20261101-02) · [DB 장애 시험·정리](docs/validation.md#g5-closeout-20261021)
 - **[개발·검증 방식](docs/cloud-platform.md#codex-development-validation)**: 본인 판단, Codex 지원, 구현·격리 시험·실제 적용·종단 시험의 구분
 
 공개 코드는 서명 검증·접속 파일 등록 도구입니다. 합성·격리 등록 검사와 실제 사용자 시험을 구분합니다. 11월 2일 Linux 시험은 원격 서버의 CLI·기존 keyring 수동 해제·Windows 브라우저/SSH 포워딩·임시 이름 매핑 조건이며, WSL이나 모든 Linux 환경의 지원 검증이 아닙니다. 과거 Windows 시험과 서로 다른 성공·제외 범위는 위 기록을 따릅니다.
@@ -38,6 +38,7 @@
 <a id="구조도와-상세-문서"></a>
 ## 대표 사례와 상세 문서
 
+- [사설 클라우드·볼륨 포털 구조](diagrams/05-cloud-volume-portal.md): 포털 실행 위치와 별도 DB, 볼륨 제어·저장 책임
 - [클라우드 구축과 사용자 자원 제공](docs/cloud-platform.md): Octavia·Kubernetes 문제 해결, 역할과 구현 범위, 기존 구조도
 - [PostgreSQL HA 구축과 장애 검증](docs/g5-postgresql-ha.md): watchdog 보정, 장애별 결과, DGX 데이터 경로와 정리
 - [AI 챗봇 소개](docs/ai-chatbot.md) · [전체 구조와 처리 흐름](docs/ai-chatbot-architecture.md): 완료된 데이터 기반과 후속 AI 서비스 설계
@@ -54,7 +55,7 @@
 - [클라우드 인프라 포트폴리오 9쪽](pdf/cloud-portfolio.pdf)
 - [FDP 연구 포트폴리오 6쪽](pdf/fdp-research.pdf)
 
-클라우드 PDF에는 Windows·Linux 사용자 시험과 Registry 격리 검증을 날짜·환경별로 구분했습니다. 실제 실행 날짜와 한계는 연결된 검증 기록을 따릅니다.
+클라우드 PDF에는 Windows·Linux 사용자 시험과 Registry 격리 검증을 날짜·환경별로 구분했습니다. 새 클라우드·볼륨 구조도와 11월 4일 클라이언트 오류 검증은 위 웹 문서에 추가했으며, 기존 PDF는 이전 검증 범위로 유지합니다. 실제 실행 날짜와 한계는 연결된 검증 기록을 따릅니다.
 
 ## 기록과 공개 범위
 
