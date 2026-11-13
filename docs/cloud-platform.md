@@ -40,11 +40,19 @@ OpenStack·Ceph 기반 자원 제공 환경을 구축하고 Kubernetes 제공과
 
 **클라이언트 오류 후속 검증:** 11월 4일에는 콜백 포트 충돌·동시 콜백, TLS 신뢰와 인증/API 경로 오류, 서명 파일 변조·이전 UID·토큰 시간·로그인 공개키 오류를 합성 환경에서 확인했습니다. 실제 API 캐시·운영 CA 회전·장기 연결·relay 장애는 별도입니다. [오류별 결과와 한계](validation.md#kubectl-client-errors-20261104)
 
+## 격리 환경에서 확인한 두 API·두 relay 정상 기준선
+
+2026년 11월 13일에는 격리된 4 VM 환경에서 독립 Kubernetes API 두 개와 publisher·relay 두 개를 연결했습니다. 두 경로 각각에서 두 relay의 ACK, 총 네 쌍을 관측하고 네 경로의 TLS CA·서버 이름 검증과 소유자 조회 허용·다른 소유자 및 node 조회 거절을 확인했습니다.
+
+이는 관측 당시의 정상 기준선이며 지속 준비 상태나 장애 복원 완료가 아닙니다. 증거 만료 뒤 갱신·실제 만료 회수는 시험하지 않았습니다. 실제 로그인·Portal UI·전체 클러스터 생성 흐름·NetworkPolicy 강제·공통 LB failover와 후속 장애 시험도 별도입니다. [정상 기준선과 제외 범위](validation.md#relay-baseline-20261113)
+
 ## Registry의 인증·준비 상태를 격리 검증
 
 Nginx 인증 proxy의 HTTP 생존 검사만 성공해도 TLS가 실패할 수 있음을 시험했습니다. 준비 검사를 CA·이름 검증 HTTPS와 backend 응답으로 보정하고, 잘못된 시험 인증서에서 NotReady·정상본 복원 후 Ready를 재시작 없이 확인했습니다. 이전 인증서 자동 유지나 운영 인증서 갱신 전체의 복구 보장을 뜻하지 않습니다.
 
 11월 2일에는 임시 Pod의 실제 Registry 이미지와 Nginx로 단계적 blob 업로드·manifest 게시, 읽기 계정의 GET/HEAD와 내용·digest 일치, 쓰기 요청 거절을 확인했습니다. backend의 Pod 외부 직접 접근 경계와 시험 자원 정리도 대조했습니다. 작은 합성 HTTP API fixture이며 운영 Registry 전환, CRI/containerd pull·Kaniko·대용량·동시성·영구 데이터 복구는 미검증입니다. [격리 시험 결과](validation.md#registry-isolated-20261101-02) · [건강 검사 판단](design-decisions.md#registry의-생존-준비-상태와-프로토콜-검증을-분리)
+
+**11월 13일 연결 준비:** 제한 API 신원의 허용·거절 권한 46개를 확인하고 기존 Portal 소비자 다섯 개에 다운로드 자격 증명 참조를 연결해 순차 rollout과 나머지 설정 보존을 확인했습니다. 빌더의 고정 release 서명도 검증했습니다. Registry 인증 활성화·실제 인증 pull/push·빌드·정기 교체는 아직 완료하지 않았습니다. 인증을 켜기 전 rollout 성공과 release 서명 성공을 실제 다운로드·빌드 성공으로 확대하지 않습니다. [준비·적용·미검증 구분](validation.md#registry-preparation-20261113)
 
 ## PostgreSQL HA와 watchdog 장애 검증
 
